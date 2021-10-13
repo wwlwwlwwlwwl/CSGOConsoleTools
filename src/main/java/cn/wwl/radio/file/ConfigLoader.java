@@ -1,6 +1,7 @@
 package cn.wwl.radio.file;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.executor.FunctionExecutor;
 import com.google.gson.*;
 
 import java.io.*;
@@ -8,7 +9,6 @@ import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConfigLoader {
 
@@ -31,9 +31,21 @@ public class ConfigLoader {
         try {
             CONFIG_CHARSET = getFileCharset(CONFIG_FILE);
             JsonElement element = JsonParser.parseReader(new FileReader(CONFIG_FILE, CONFIG_CHARSET));
-            cache_Object = GSON.fromJson(element, ConfigObject.class);
+            try {
+                cache_Object = GSON.fromJson(element, ConfigObject.class);
+            } catch (Exception e) {
+                ConsoleManager.getConsole().printError("Try parse the Config file Throw Exception!");
+                e.printStackTrace();
+                return;
+            }
+
             ConsoleManager.getConsole().printToConsole("ConfigFile Charset : " + CONFIG_CHARSET);
             checkConfigUpdate(element,cache_Object);
+            ConfigWatcher.startWatchConfig();
+
+            if (forceReload) {
+                FunctionExecutor.reloadModules();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

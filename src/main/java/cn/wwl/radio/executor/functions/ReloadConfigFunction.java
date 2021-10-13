@@ -13,7 +13,6 @@ public class ReloadConfigFunction implements ConsoleFunction {
         SocketTransfer.getInstance().echoToConsole("Reloading Config...");
 
         ConfigLoader.loadConfigObject(true);
-        FunctionExecutor.reloadModules();
 
         SocketTransfer.getInstance().echoToConsole("Done.");
     }
