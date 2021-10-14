@@ -13,13 +13,23 @@ public class ConfigWatcher implements Runnable {
     private static long previousEditTime;
 
     public static void startWatchConfig() {
+        if (!ConfigLoader.getConfigObject().isAutoReloadConfig()) {
+            return;
+        }
+
         if (previousEditTime == 0L) {
+            ConsoleManager.getConsole().printToConsole("Start ConfigWatcher Thread...");
             watcherExecutor.scheduleAtFixedRate(new ConfigWatcher(),0,1000, TimeUnit.MILLISECONDS);
         }
     }
 
     @Override
     public void run() {
+        if (!ConfigLoader.getConfigObject().isAutoReloadConfig()) {
+            watcherExecutor.shutdown();
+            return;
+        }
+
         File configFile = ConfigLoader.CONFIG_FILE;
         long currentModified = configFile.lastModified();
         if (previousEditTime == 0L) {
@@ -30,7 +40,11 @@ public class ConfigWatcher implements Runnable {
         if (previousEditTime != currentModified) {
             previousEditTime = currentModified;
             ConsoleManager.getConsole().printToConsole("ConfigFile has been changed! Reloading Config...");
-            ConfigLoader.loadConfigObject(true);
+            if (ConfigLoader.loadConfigObject(true)) {
+                ConsoleManager.getConsole().printToConsole("Reload done.");
+            } else {
+                ConsoleManager.getConsole().printToConsole("Reload Failed!");
+            }
         }
     }
 }

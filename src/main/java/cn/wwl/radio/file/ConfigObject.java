@@ -6,7 +6,8 @@ import java.util.*;
 
 public class ConfigObject {
     private String prefix = "jw";
-    private List<TextMarker> randomColors = Arrays.stream(TextMarker.values()).toList();
+    private boolean autoReloadConfig = true;
+    private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = Map.of(
             "0radioYes", "agree"
             , "0radioNo", "disagree"
@@ -17,6 +18,7 @@ public class ConfigObject {
             , "0radioWhat", "what"
             , "0radioVerynice", "wow"
     );
+
     private List<ModuleObject> moduleList = List.of(ModuleObject.getTemplate());
 
     public String getPrefix() {
@@ -33,6 +35,10 @@ public class ConfigObject {
 
     public Map<String, String> getAutoReplaceCommand() {
         return autoReplaceCommand;
+    }
+
+    public boolean isAutoReloadConfig() {
+        return autoReloadConfig;
     }
 
     public static class ModuleObject {
@@ -84,10 +90,7 @@ public class ConfigObject {
 
         public static ModuleObject getTemplate() {
             StringBuilder builder = new StringBuilder("Color: ");
-            for (TextMarker value : TextMarker.values()) {
-                if (value == TextMarker.未知) {
-                    continue;
-                }
+            for (TextMarker value : TextMarker.availableColors()) {
                 builder.append(value.getHumanCode()).append(value.getHumanCode().replace("#", "")).append(" ");
             }
             builder.append("#random# random");

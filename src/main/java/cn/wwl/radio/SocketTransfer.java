@@ -3,6 +3,7 @@ package cn.wwl.radio;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.ConsoleFunction;
 import cn.wwl.radio.executor.FunctionExecutor;
+import cn.wwl.radio.file.ConfigLoader;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -36,7 +37,7 @@ public class SocketTransfer {
     private SocketTransfer(){}
 
     public void start() {
-        ConsoleManager.getConsole().printToConsole("System Charset : " + Charset.defaultCharset());
+        ConsoleManager.getConsole().printToConsole("System Charset: " + Charset.defaultCharset() + ", Config Charset: " + ConfigLoader.getConfigCharset());
         ConsoleManager.getConsole().printToConsole("Waiting Game start...");
         boolean connected = false;
         while (!connected) {

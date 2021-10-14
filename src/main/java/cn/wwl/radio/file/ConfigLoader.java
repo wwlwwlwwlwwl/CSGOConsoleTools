@@ -22,33 +22,36 @@ public class ConfigLoader {
         return cache_Object;
     }
 
-    public static void loadConfigObject(boolean forceReload) {
+    public static Charset getConfigCharset() {
+        return CONFIG_CHARSET;
+    }
+
+    public static boolean loadConfigObject(boolean forceReload) {
         if (!forceReload && cache_Object != null) {
-            return;
+            return false;
         }
 
         checkConfigExists();
+        CONFIG_CHARSET = getFileCharset(CONFIG_FILE);
         try {
-            CONFIG_CHARSET = getFileCharset(CONFIG_FILE);
             JsonElement element = JsonParser.parseReader(new FileReader(CONFIG_FILE, CONFIG_CHARSET));
-            try {
-                cache_Object = GSON.fromJson(element, ConfigObject.class);
-            } catch (Exception e) {
-                ConsoleManager.getConsole().printError("Try parse the Config file Throw Exception!");
-                e.printStackTrace();
-                return;
-            }
-
-            ConsoleManager.getConsole().printToConsole("ConfigFile Charset : " + CONFIG_CHARSET);
-            checkConfigUpdate(element,cache_Object);
-            ConfigWatcher.startWatchConfig();
-
-            if (forceReload) {
-                FunctionExecutor.reloadModules();
-            }
-        } catch (IOException e) {
+            cache_Object = GSON.fromJson(element, ConfigObject.class);
+            checkConfigUpdate(element, cache_Object);
+        } catch (Exception e) {
+            ConsoleManager.getConsole().printError("Try parse the Config file Throw Exception! Check your config File!");
             e.printStackTrace();
+            if (cache_Object == null) { //第一次加载直接抛出异常 退出程序
+                System.exit(1);
+            }
+            return false;
         }
+
+        ConfigWatcher.startWatchConfig();
+
+        if (forceReload) {
+            FunctionExecutor.reloadModules();
+        }
+        return true;
     }
 
     public static void writeConfigObject() {
@@ -113,7 +116,7 @@ public class ConfigLoader {
         }
     }
 
-    private static void checkConfigUpdate(JsonElement element,ConfigObject object) {
+    private static void checkConfigUpdate(JsonElement element, ConfigObject object) {
         Field[] fields = object.getClass().getDeclaredFields();
         JsonObject jsonObject = element.getAsJsonObject();
         List<Field> updateFields = new ArrayList<>();
@@ -128,12 +131,12 @@ public class ConfigLoader {
             ConfigObject exampleObject = new ConfigObject();
             for (Field updateField : updateFields) {
                 try {
-                Field exampleField = exampleObject.getClass().getDeclaredField(updateField.getName());
-                exampleField.setAccessible(true);
-                Object o = exampleField.get(exampleObject);
+                    Field exampleField = exampleObject.getClass().getDeclaredField(updateField.getName());
+                    exampleField.setAccessible(true);
+                    Object o = exampleField.get(exampleObject);
 
-                updateField.setAccessible(true);
-                updateField.set(object, o);
+                    updateField.setAccessible(true);
+                    updateField.set(object, o);
                 } catch (Exception e) {
                     ConsoleManager.getConsole().printToConsole("Set value for " + updateField.getName() + " Failed!");
                     e.printStackTrace();
