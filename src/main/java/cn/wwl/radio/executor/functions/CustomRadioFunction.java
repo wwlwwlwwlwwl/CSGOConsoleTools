@@ -29,7 +29,27 @@ public class CustomRadioFunction implements ConsoleFunction {
             radio = parameter.get(0);
             message = parameter.get(random);
         }
+        sendCustomRadio(radio,message,false);
+    }
+
+    public static void sendCustomRadio(String radio,String message,boolean removeHead) {
+        if (radio == null || message == null) {
+            return;
+        }
+
+        if (removeHead) {
+            message = "#next#" + message;
+        }
+
         String cmd = TextMarker.replaceHumanCode("playerradio " + radio + " \"" + message + "\"");
-        SocketTransfer.getInstance().pushToConsole(cmd);
+        SocketTransfer.getInstance().pushToConsole(cmd); //TODO 自动切断句子避免过长
+    }
+
+    public static void sendCustomRadio(String message,boolean removeHead) {
+        sendCustomRadio("hi",message,removeHead);
+    }
+
+    public static void sendCustomRadio(String message) {
+        sendCustomRadio("hi",message,false);
     }
 }

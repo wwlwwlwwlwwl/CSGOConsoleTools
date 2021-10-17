@@ -2,10 +2,7 @@ package cn.wwl.radio.executor;
 
 import cn.wwl.radio.SocketTransfer;
 import cn.wwl.radio.console.ConsoleManager;
-import cn.wwl.radio.executor.functions.AutoChatFunction;
-import cn.wwl.radio.executor.functions.CustomRadioFunction;
-import cn.wwl.radio.executor.functions.HelpFunction;
-import cn.wwl.radio.executor.functions.ReloadConfigFunction;
+import cn.wwl.radio.executor.functions.*;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
 
@@ -135,9 +132,12 @@ public class FunctionExecutor {
         }
 
         functions.put("CustomRadio", new CustomRadioFunction());
+        functions.put("CustomChat",new CustomChatFunction());
         functions.put("AutoChat", new AutoChatFunction());
         functions.put("help", new HelpFunction());
-        functions.put("reloadConfig", new ReloadConfigFunction());
+        functions.put("ReloadConfig", new ReloadConfigFunction());
+        functions.put("FakeOpenCase",new FakeCaseOpenFunction());
+        functions.put("Debug",new DebugFunction());
         //TODO 反射寻找其他模块来进行注册
     }
 

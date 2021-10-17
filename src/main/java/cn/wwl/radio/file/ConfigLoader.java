@@ -15,11 +15,11 @@ public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().serializeNulls().create();
     public static final File CONFIG_FILE = new File(".", "Config.json");
     private static Charset CONFIG_CHARSET = Charset.defaultCharset();
-    private static ConfigObject cache_Object = null;
+    private static ConfigObject configObject = null;
 
 
     public static ConfigObject getConfigObject() {
-        return cache_Object;
+        return configObject;
     }
 
     public static Charset getConfigCharset() {
@@ -27,7 +27,7 @@ public class ConfigLoader {
     }
 
     public static boolean loadConfigObject(boolean forceReload) {
-        if (!forceReload && cache_Object != null) {
+        if (!forceReload && configObject != null) {
             return false;
         }
 
@@ -35,12 +35,12 @@ public class ConfigLoader {
         CONFIG_CHARSET = getFileCharset(CONFIG_FILE);
         try {
             JsonElement element = JsonParser.parseReader(new FileReader(CONFIG_FILE, CONFIG_CHARSET));
-            cache_Object = GSON.fromJson(element, ConfigObject.class);
-            checkConfigUpdate(element, cache_Object);
+            configObject = GSON.fromJson(element, ConfigObject.class);
+            checkConfigUpdate(element, configObject);
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try parse the Config file Throw Exception! Check your config File!");
             e.printStackTrace();
-            if (cache_Object == null) { //第一次加载直接抛出异常 退出程序
+            if (configObject == null) { //第一次加载直接抛出异常 退出程序
                 System.exit(1);
             }
             return false;
@@ -143,7 +143,7 @@ public class ConfigLoader {
                 }
             }
 
-            cache_Object = object;
+            configObject = object;
             writeObject(true);
             ConsoleManager.getConsole().printToConsole("Config file updated! Please check the config file!");
             System.exit(0);
@@ -152,7 +152,7 @@ public class ConfigLoader {
 
     private static void writeObject(boolean writeCache) {
         try {
-            String data = writeCache ? GSON.toJson(cache_Object) : GSON.toJson(new ConfigObject());
+            String data = writeCache ? GSON.toJson(configObject) : GSON.toJson(new ConfigObject());
             FileWriter writer = new FileWriter(CONFIG_FILE, CONFIG_CHARSET);
             writer.write(data);
             writer.flush();

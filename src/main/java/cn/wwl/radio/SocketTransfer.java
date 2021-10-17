@@ -110,8 +110,6 @@ public class SocketTransfer {
     private static final String NEW_CLIENT_LOGIN = "onNewClientLogin-";
 
     private void echoLogin() {
-        //TODO 发个ESC试下?
-        pushToConsole("escape");
         pushToConsole("echo " + NEW_CLIENT_LOGIN + bootTimestamp);
         pushToConsole("showconsole;clear");
         pushToConsole("echo .......##.####.##......##.########.####..");
