@@ -1,6 +1,6 @@
 package cn.wwl.radio.player;
 
-import cn.wwl.radio.SocketTransfer;
+import cn.wwl.radio.network.SocketTransfer;
 
 import java.util.HashSet;
 import java.util.Locale;

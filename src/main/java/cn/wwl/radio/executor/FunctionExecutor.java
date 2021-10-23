@@ -1,6 +1,6 @@
 package cn.wwl.radio.executor;
 
-import cn.wwl.radio.SocketTransfer;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.functions.*;
 import cn.wwl.radio.file.ConfigLoader;

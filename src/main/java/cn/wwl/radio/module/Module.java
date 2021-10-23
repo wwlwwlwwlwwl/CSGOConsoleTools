@@ -1,6 +1,6 @@
 package cn.wwl.radio.module;
 
-import cn.wwl.radio.SocketTransfer;
+import cn.wwl.radio.network.SocketTransfer;
 
 import java.util.List;
 

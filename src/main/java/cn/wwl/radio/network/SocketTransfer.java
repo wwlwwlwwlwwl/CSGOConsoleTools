@@ -1,4 +1,4 @@
-package cn.wwl.radio;
+package cn.wwl.radio.network;
 
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.ConsoleFunction;
@@ -62,7 +62,7 @@ public class SocketTransfer {
         }
 
         bootTimestamp = System.currentTimeMillis();
-        ConsoleManager.getConsole().printToConsole("Start Console Listen thread...");
+        ConsoleManager.getConsole().printToConsole("Start Console Listener thread...");
         executor.execute(listener);
         try {
             outputStream = new BufferedOutputStream(socket.getOutputStream());
@@ -81,6 +81,7 @@ public class SocketTransfer {
         registerCtrlCHook();
         FunctionExecutor.registerGameHook();
         echoLogin();
+        SocketConsole.createRemoteListener();
         ConsoleManager.getConsole().startConsole();
     }
 
@@ -258,6 +259,7 @@ public class SocketTransfer {
                         ConsoleManager.getConsole().printToConsole("Throw Exception on Execute Command : " + read);
                     }
                     ConsoleManager.getConsole().redirectGameConsole(read);
+                    SocketConsole.onGameConsoleMessage(read);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

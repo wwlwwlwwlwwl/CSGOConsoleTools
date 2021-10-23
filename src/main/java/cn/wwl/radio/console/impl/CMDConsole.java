@@ -1,7 +1,6 @@
 package cn.wwl.radio.console.impl;
 
-import cn.wwl.radio.SocketTransfer;
-import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.console.GameConsole;
 
 import java.util.Scanner;
@@ -32,7 +31,7 @@ public class CMDConsole implements GameConsole {
 
     @Override
     public void startConsole() {
-        System.out.println("CSGO Remote Virtual Console.");
+        System.out.println("CSGO Virtual Console.");
         System.out.println("Console ready. Enter everything will redirect to console.");
         Scanner scanner = new Scanner(System.in).useDelimiter("\n");
         while (!Thread.currentThread().isInterrupted()) {

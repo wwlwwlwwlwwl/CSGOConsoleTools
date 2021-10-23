@@ -7,6 +7,7 @@ import java.util.*;
 public class ConfigObject {
     private String prefix = "jw";
     private boolean autoReloadConfig = true;
+    private int remoteConsolePort = 29999;
     private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = Map.of(
             "0radioYes", "agree"
@@ -35,6 +36,10 @@ public class ConfigObject {
 
     public Map<String, String> getAutoReplaceCommand() {
         return autoReplaceCommand;
+    }
+
+    public int getRemoteConsolePort() {
+        return remoteConsolePort;
     }
 
     public boolean isAutoReloadConfig() {
