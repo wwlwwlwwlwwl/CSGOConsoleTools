@@ -1,6 +1,8 @@
 package cn.wwl.radio.executor.functions;
 
-import cn.wwl.radio.NeteaseMusicManager;
+import cn.wwl.radio.music.MusicManager;
+import cn.wwl.radio.music.MusicResult;
+import cn.wwl.radio.music.NeteaseMusicSource;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.ConsoleFunction;
 import cn.wwl.radio.executor.FunctionExecutor;
@@ -26,7 +28,7 @@ public class CustomMusicFunction implements ConsoleFunction {
 
     private static boolean isEnableSearch = true;
     private static boolean isLocalVersion = ConfigLoader.getConfigObject().isMusicNetworkSearch();
-    private static final List<NeteaseMusicManager.MusicResult> previusResult = new ArrayList<>();
+    private static final List<MusicResult> previusResult = new ArrayList<>();
 
     @Override
     public boolean isRequireTicking() {
@@ -131,7 +133,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         } else if (content.contains("!search")) {
             String searchName = content.substring(7);
             ConsoleManager.getConsole().printToConsole("Start Call search for: " + searchName);
-            List<NeteaseMusicManager.MusicResult> musicResults = NeteaseMusicManager.searchMusic(searchName);
+            List<MusicResult> musicResults = MusicManager.getMusicSource().searchMusic(searchName);
             if (musicResults.isEmpty()) {
                 sayTeam("搜索返回内容为0!");
                 return;
@@ -142,7 +144,7 @@ public class CustomMusicFunction implements ConsoleFunction {
             StringBuilder builder = new StringBuilder();
 
             for (int i = 0; i < musicResults.size(); i++) {
-                NeteaseMusicManager.MusicResult musicResult = musicResults.get(i);
+                MusicResult musicResult = musicResults.get(i);
                 builder.append(TextMarker.红色.getHumanCode()).append(i).append(".")
                         .append(TextMarker.金色.getHumanCode()).append(musicResult.getName())
                         .append(TextMarker.灰色.getHumanCode()).append("--")
@@ -168,14 +170,14 @@ public class CustomMusicFunction implements ConsoleFunction {
             sayTeam(TextMarker.金色.getHumanCode() + "正在缓存...请稍后.");
 
             List<File> temp_list = new ArrayList<>();
-            File downloadMusic = NeteaseMusicManager.downloadMusic(previusResult.get(musicCount));
+            File downloadMusic = MusicManager.getMusicSource().downloadMusic(previusResult.get(musicCount));
             int retryCount = 0;
             while (downloadMusic == null) {
                 if (++retryCount >= 5) {
                     sayTeam(TextMarker.红色.getHumanCode() + "音乐下载失败!请重试!");
                     return;
                 }
-                downloadMusic = NeteaseMusicManager.downloadMusic(previusResult.get(musicCount));
+                downloadMusic = MusicManager.getMusicSource().downloadMusic(previusResult.get(musicCount));
             }
             SoxSoundUtils.cacheMusic(downloadMusic,temp_list);
             while (temp_list.isEmpty()) {
@@ -256,7 +258,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         }
 
         File[] musics = SoxSoundUtils.getMusicDir().listFiles((file) -> !file.isDirectory());
-        if (musics.length == 0) {
+        if (musics == null || musics.length == 0) {
             ConsoleManager.getConsole().printToConsole("CanNot find any Music!");
             return;
         }

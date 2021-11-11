@@ -11,6 +11,7 @@ public class ConfigObject {
     private int remoteConsolePort = 29999;
     private boolean musicNetworkSearch = true;
     private String APIToken = "None";
+    private String musicSource = "Netease";
     private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = Map.of(
             "0radioYes", "agree"
@@ -51,6 +52,10 @@ public class ConfigObject {
 
     public boolean isAutoReloadConfig() {
         return autoReloadConfig;
+    }
+
+    public String getMusicSource() {
+        return musicSource;
     }
 
     public String getAPIToken() {
