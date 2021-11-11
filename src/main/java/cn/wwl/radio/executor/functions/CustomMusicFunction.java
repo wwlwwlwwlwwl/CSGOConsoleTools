@@ -4,6 +4,7 @@ import cn.wwl.radio.NeteaseMusicManager;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.ConsoleFunction;
 import cn.wwl.radio.executor.FunctionExecutor;
+import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.SoxSoundUtils;
 import cn.wwl.radio.utils.SteamUtils;
@@ -24,7 +25,7 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static boolean isInited = false;
 
     private static boolean isEnableSearch = true;
-    private static final boolean isLocalVersion = false;
+    private static boolean isLocalVersion = ConfigLoader.getConfigObject().isMusicNetworkSearch();
     private static final List<NeteaseMusicManager.MusicResult> previusResult = new ArrayList<>();
 
     @Override
@@ -110,7 +111,11 @@ public class CustomMusicFunction implements ConsoleFunction {
 
     @Override
     public void onHookPlayerChat(String name, String content) {
-        if (!(content.contains("!search") || content.contains("!play") || content.contains("!stop"))) {
+        if (!(
+                content.contains("!search") ||
+                content.contains("!play") ||
+                content.contains("!stop")
+        )) {
             return;
         }
 
@@ -164,13 +169,21 @@ public class CustomMusicFunction implements ConsoleFunction {
 
             List<File> temp_list = new ArrayList<>();
             File downloadMusic = NeteaseMusicManager.downloadMusic(previusResult.get(musicCount));
+            int retryCount = 0;
+            while (downloadMusic == null) {
+                if (++retryCount >= 5) {
+                    sayTeam(TextMarker.红色.getHumanCode() + "音乐下载失败!请重试!");
+                    return;
+                }
+                downloadMusic = NeteaseMusicManager.downloadMusic(previusResult.get(musicCount));
+            }
             SoxSoundUtils.cacheMusic(downloadMusic,temp_list);
             while (temp_list.isEmpty()) {
                 try {
                     Thread.sleep(50);
                 } catch (Exception ignored) {}
             }
-            System.out.println("Music download done.");
+            ConsoleManager.getConsole().printToConsole("Music " + downloadMusic.getName() + " Ready.");
             playMusic(temp_list.get(0));
         } else if (content.equals("!stop")) {
             if (isPlaying) {
@@ -188,7 +201,6 @@ public class CustomMusicFunction implements ConsoleFunction {
             return;
         }
 
-        System.out.println("Call startPlaying");
         File inputFile = new File(SteamUtils.getCsgoPath(),"voice_input.wav");
         if (inputFile.exists()) {
             inputFile.delete();
@@ -208,22 +220,21 @@ public class CustomMusicFunction implements ConsoleFunction {
                 "voice_loopback 1;" +
                         "voice_inputfromfile 1;" +
                         "voice_forcemicrecord 0;" +
-                        "+voicerecord;");
-//                        "clear");
+                        "+voicerecord;" +
+                        "clear");
         isPlaying = true;
         SocketTransfer.getInstance().echoToConsole("Now start Playing: " + cachedMusic.getName());
     }
 
     public static void stopMusic() {
-        System.out.println("Call stopMusic");
         SocketTransfer.getInstance().pushToConsole(
                 "-voicerecord;" +
                         "unbind " + volumeKey + ";" +
                         "bind " + volumeKey + " \"+voicerecord\";" +
                         "voice_loopback 0;" +
                         "voice_inputfromfile 0;" +
-                        "voice_forcemicrecord 1;"
-//                        "clear"
+                        "voice_forcemicrecord 1;" +
+                        "clear"
         );
         isPlaying = false;
         SocketTransfer.getInstance().echoToConsole("Music play now Stop.");

@@ -1,6 +1,7 @@
 package cn.wwl.radio;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.utils.SoxSoundUtils;
 import com.google.gson.*;
 import org.jsoup.Connection;
@@ -10,22 +11,23 @@ import org.jsoup.nodes.Document;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class NeteaseMusicManager {
 
     private static final String API_LINK = "https://v2.alapi.cn/api/music";
-    private static final String API_TOKEN = "h3evk3001kPbB7Kp";
+    private static final String API_TOKEN = ConfigLoader.getConfigObject().getAPIToken();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().serializeNulls().create();
     private static final File DOWNLOAD_DIR = new File(SoxSoundUtils.getMusicDir(),"downloads");
 
     public static List<MusicResult> searchMusic(String name) {
         if (name == null || name.length() == 0 || name.equals(" ")) {
+            return List.of();
+        }
+
+        if (API_TOKEN.equals("None")) {
+            ConsoleManager.getConsole().printError("API_KEY not Set! Cannot Search music!");
             return List.of();
         }
         try {
@@ -52,6 +54,11 @@ public class NeteaseMusicManager {
 
     public static File downloadMusic(MusicResult result) {
         if (result == null) {
+            return null;
+        }
+
+        if (API_TOKEN.equals("None")) {
+            ConsoleManager.getConsole().printError("API_KEY not Set! Cannot Download music!");
             return null;
         }
 

@@ -49,4 +49,8 @@ public class SteamUtils {
         }
         return "";
     }
+
+    private static boolean isWindowsSystem() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
 }

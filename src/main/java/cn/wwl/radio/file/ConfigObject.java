@@ -9,6 +9,8 @@ public class ConfigObject {
     private boolean autoReloadConfig = true;
     private int gamePort = 10090;
     private int remoteConsolePort = 29999;
+    private boolean musicNetworkSearch = true;
+    private String APIToken = "None";
     private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = Map.of(
             "0radioYes", "agree"
@@ -49,6 +51,14 @@ public class ConfigObject {
 
     public boolean isAutoReloadConfig() {
         return autoReloadConfig;
+    }
+
+    public String getAPIToken() {
+        return APIToken;
+    }
+
+    public boolean isMusicNetworkSearch() {
+        return musicNetworkSearch;
     }
 
     public static class ModuleObject {
