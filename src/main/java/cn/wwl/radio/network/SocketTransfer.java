@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class SocketTransfer {
 
     public static final String ECHO_HEAD = "ConsoleTools";
-    public static final int CONNECT_PORT = 10090;
+    private static int CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
     private static final SocketTransfer socketTransfer = new SocketTransfer();
 
     private Socket socket;
@@ -38,7 +38,7 @@ public class SocketTransfer {
 
     public void start() {
         ConsoleManager.getConsole().printToConsole("System Charset: " + Charset.defaultCharset() + ", Config Charset: " + ConfigLoader.getConfigCharset());
-        ConsoleManager.getConsole().printToConsole("Waiting Game start...");
+        ConsoleManager.getConsole().printToConsole("Watching Port: " + CONNECT_PORT + ", Waiting Game start...");
         boolean connected = false;
         while (!connected) {
             try {
@@ -121,6 +121,11 @@ public class SocketTransfer {
         pushToConsole("echo .##....##..##..##..##..##.##........##...");
         pushToConsole("echo ..######..####..###..###..########.####..");
         echoToConsole("Hello world! Hooked cmd!");
+        echoToConsole("Cmd List: ");
+        ConfigLoader.getConfigObject().getModuleList().forEach(module -> {
+            String prefix = ConfigLoader.getConfigObject().getPrefix();
+            echoToConsole("Module: " + module.getName() + ", Function: " + module.getFunction() + ", " + prefix + "_" + module.getCommand());
+        });
     }
 
     private void echoDisconnect() {
@@ -193,7 +198,7 @@ public class SocketTransfer {
     }
 */
     public void echoToConsole(String str) {
-        pushToConsole("echo " + ECHO_HEAD + " > " + str);
+        pushToConsole("echo \"" + ECHO_HEAD + " > " + str + "\"");
     }
 
     /**
@@ -273,9 +278,10 @@ public class SocketTransfer {
         }
 
         private final Map<String, ConsoleFunction> func = new HashMap<>();
+        private boolean hookInited = false;
 
         private ConsoleFunction isContainHookedMessage(String message) {
-            if (func.isEmpty()) {
+            if (func.isEmpty() && !hookInited) {
                 Map<String, ConsoleFunction> functions = FunctionExecutor.getFunctions();
                 for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
                     List<String> hookMessage = entry.getValue().isHookSpecialMessage();
@@ -284,6 +290,7 @@ public class SocketTransfer {
                     }
                     hookMessage.forEach(s -> func.put(s,entry.getValue()));
                 }
+                hookInited = true;
             }
 
             for (Map.Entry<String, ConsoleFunction> entry : func.entrySet()) {

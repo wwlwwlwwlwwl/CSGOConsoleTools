@@ -5,6 +5,7 @@ import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.functions.*;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
+import cn.wwl.radio.utils.SteamUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,37 +22,37 @@ public class FunctionExecutor {
     public static final String HOOK_HEAD = "HookExecute";
 
     public static void executeFunction(String cmd) {
-        String func;
+        try {
+            //尝试解析玩家聊天 如果失败则忽略
+            //（反恐精英）wwl‎ @ 反恐精英起始点 ： 123123
+            //（****）wwl‎ @ ****起始点 ： 123123
+            if (cmd.contains("（反恐精英）") || cmd.contains("（****）")) {
+                String playerName = cmd.substring(6, cmd.indexOf("@")).trim();
+                String[] split = cmd.split(" ： ");
+                String talkMessage = split[split.length - 1].trim();
+                for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
+                    ConsoleFunction function = entry.getValue();
+                    if (function.isHookPlayerChat()) {
+                        function.onHookPlayerChat(playerName, talkMessage);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
         if (!(cmd.startsWith(FunctionExecutor.HOOK_HEAD) || cmd.startsWith("Unknown"))) {
             return;
         }
 
-        if (cmd.startsWith("Unknown")) {
-            /*两种输出方式:
-            1. 主菜单 : Unknown command "hello"
-            2. 游戏内 : Unknown command : hello
-            真就V社爆改
-             */
-            try {
-                int firstIndex = cmd.indexOf("\"") + 1; //包含引号
-                int lastIndex = cmd.lastIndexOf("\"");
-                func = cmd.substring(firstIndex, lastIndex);
-            } catch (Exception e) {
-                func = cmd.split(":")[1].trim(); //如果抛出异常 说明不是新版 则使用老版分割
-            }
+        String func = removeUnknownHead(cmd);
 
-            String newCommand = commandReplace(func);
-            if (func.equalsIgnoreCase(newCommand)) { //替换完了还是一样 说明这个不是目标
-                return;
-            }
+        String newCommand = commandReplace(func);
+        if (!func.equalsIgnoreCase(newCommand)) { //处理自定义替换的字符串
             SocketTransfer.getInstance().echoToConsole("Cmd [" + func + "] has been Replace to [" + newCommand + "] .");
             func = newCommand;
-        } else {
-            func = cmd.substring(FunctionExecutor.HOOK_HEAD.length() + 1).trim();
         }
 
         if (!modules.containsKey(func)) {
-            ConsoleManager.getConsole().printError("got call for [" + func + "] But not find correct Module in Map!");
+//            ConsoleManager.getConsole().printError("got call for [" + func + "] But not find correct Module in Map!");
             return;
         }
         ConfigObject.ModuleObject moduleConfig = modules.get(func);
@@ -64,6 +65,24 @@ public class FunctionExecutor {
         function.onHookSpecialMessage(message);
     }
 
+    public static String removeUnknownHead(String cmd) {
+        if (cmd.startsWith("Unknown")) {
+            /*两种输出方式:
+            1. 主菜单 : Unknown command "hello"
+            2. 游戏内 : Unknown command : hello
+            真就V社爆改
+             */
+            try {
+                int firstIndex = cmd.indexOf("\"") + 1; //包含引号
+                int lastIndex = cmd.lastIndexOf("\"");
+                return cmd.substring(firstIndex, lastIndex);
+            } catch (Exception e) {
+                return cmd.split(":")[1].trim(); //如果抛出异常 说明不是新版 则使用老版分割
+            }
+        } else {
+            return cmd.substring(FunctionExecutor.HOOK_HEAD.length() + 1).trim();
+        }
+    }
 
     public static void printHelp() {
         SocketTransfer.getInstance().echoToConsole("Help list : ");
@@ -86,13 +105,15 @@ public class FunctionExecutor {
                     .append(moduleObject.getCommand())
                     .append("\";");
         });
-        ConsoleManager.getConsole().printToConsole("Alias : " + aliasBuilder);
+//        ConsoleManager.getConsole().printToConsole("Alias: " + aliasBuilder);
         SocketTransfer.getInstance().pushToConsole(aliasBuilder.toString());
         ConsoleManager.getConsole().printToConsole("Register commands done.");
 
         if (!isStartTickThread.get()) {
             startTickThread();
         }
+
+        SteamUtils.initCSGODir();
     }
 
     public static void reloadModules() {
@@ -138,6 +159,8 @@ public class FunctionExecutor {
         functions.put("ReloadConfig", new ReloadConfigFunction());
         functions.put("FakeOpenCase",new FakeCaseOpenFunction());
         functions.put("Debug",new DebugFunction());
+        functions.put("CustomMusic",new CustomMusicFunction());
+        functions.put("DamageReport",new DamageReportFunction());
         //TODO 反射寻找其他模块来进行注册
     }
 

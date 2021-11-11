@@ -25,7 +25,7 @@ public class CustomRadioFunction implements ConsoleFunction {
             message = parameter.get(1);
         } else {
             int random = new Random().nextInt(parameter.size() - 1) + 1;
-            System.out.println("Random count : " + (parameter.size() - 1) + " , Now random : " + (random));
+//            System.out.println("Random count : " + (parameter.size() - 1) + " , Now random : " + (random));
             radio = parameter.get(0);
             message = parameter.get(random);
         }
@@ -40,7 +40,7 @@ public class CustomRadioFunction implements ConsoleFunction {
         if (removeHead) {
             message = "#next#" + message;
         }
-
+//        System.out.println("Debug: " + message);
         String cmd = TextMarker.replaceHumanCode("playerradio " + radio + " \"" + message + "\"");
         SocketTransfer.getInstance().pushToConsole(cmd); //TODO 自动切断句子避免过长
     }

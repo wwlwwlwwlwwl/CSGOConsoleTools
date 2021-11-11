@@ -4,6 +4,7 @@ import cn.wwl.radio.network.SocketTransfer;
 
 import java.util.List;
 
+@Deprecated
 public abstract class Module {
 
     /**

@@ -21,6 +21,12 @@ public interface ConsoleFunction {
     }
 
     /**
+     * 声明是否需要获取玩家的聊天内容
+     * @return 如果为True 则会在玩家聊天时获取聊天内容触发事件
+     */
+    default boolean isHookPlayerChat() {return false;}
+
+    /**
      * 声明想从控制台勾住特定信息 如果信息在控制台中出现 则会进行调用
      * @return 要包含的文字 以List的方法返回
      */
@@ -42,4 +48,11 @@ public interface ConsoleFunction {
      * @param message 被勾住的信息
      */
     default void onHookSpecialMessage(String message) {}
+
+    /**
+     * 当声明勾住玩家信息时调用
+     * @param name 玩家名称
+     * @param content 玩家聊天的内容
+     */
+    default void onHookPlayerChat(String name,String content) {}
 }

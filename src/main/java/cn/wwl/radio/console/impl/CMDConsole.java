@@ -31,8 +31,8 @@ public class CMDConsole implements GameConsole {
 
     @Override
     public void startConsole() {
-        System.out.println("CSGO Virtual Console.");
-        System.out.println("Console ready. Enter everything will redirect to console.");
+        printToConsole("CSGO Virtual Console.");
+        printToConsole("Console ready. Enter everything will redirect to console.");
         Scanner scanner = new Scanner(System.in).useDelimiter("\n");
         while (!Thread.currentThread().isInterrupted()) {
             String next = "";

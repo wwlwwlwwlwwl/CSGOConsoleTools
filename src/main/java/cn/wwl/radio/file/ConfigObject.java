@@ -7,6 +7,7 @@ import java.util.*;
 public class ConfigObject {
     private String prefix = "jw";
     private boolean autoReloadConfig = true;
+    private int gamePort = 10090;
     private int remoteConsolePort = 29999;
     private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = Map.of(
@@ -40,6 +41,10 @@ public class ConfigObject {
 
     public int getRemoteConsolePort() {
         return remoteConsolePort;
+    }
+
+    public int getGamePort() {
+        return gamePort;
     }
 
     public boolean isAutoReloadConfig() {

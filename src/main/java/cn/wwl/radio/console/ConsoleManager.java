@@ -10,6 +10,10 @@ public class ConsoleManager {
     private static GameConsole console;
 
     public static void initConsole(String[] arg) {
+        if (console != null) {
+            return;
+        }
+
         for (String s : arg) {
             if (s.toLowerCase(Locale.ROOT).contains("gui")) {
                 console = new GUIConsole();

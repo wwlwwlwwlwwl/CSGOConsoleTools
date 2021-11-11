@@ -5,7 +5,7 @@ import cn.wwl.radio.player.PlayerController;
 
 import java.util.List;
 
-
+@Deprecated
 public class PlayerPosMod extends Module {
 
     private boolean enabled = false;

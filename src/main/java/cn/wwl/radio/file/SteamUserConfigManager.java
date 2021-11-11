@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * 自动修改Steam游戏的启动行 来解决需要添加CSGO启动行的问题
  */
+@Deprecated
 public class SteamUserConfigManager {
 
     private static final Executor pool = Executors.newSingleThreadExecutor();
@@ -122,23 +123,21 @@ public class SteamUserConfigManager {
         return Arrays.stream(file.listFiles((dir, name) -> !name.equals("ac"))).toList();
     }
 
-    private static String getSteamLocation() {
+     public static String getSteamLocation() {
         try {
-            Process process = Runtime.getRuntime().exec("wmic process where \"name='steam.exe'\" get CommandLine");
+//            Process process = Runtime.getRuntime().exec("wmic process where \"name='steam.exe'\" get CommandLine");
+            Process process = Runtime.getRuntime().exec("powershell \"Get-WmiObject -Query \\\"select * from Win32_Process where name='csgo.exe'\\\" | Format-List -Property \\\"Path\\\"\""); //Fuck you Microsoft
+            //Get-WmiObject -Query "select * from Win32_Process where name='csgo.exe'" | Format-List -Property "Path"
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String s = "";
             while ((s = reader.readLine()) != null) {
-                if (s.contains("没有可用实例")) {
-                    return "";
-                }
-
-                if (s.toLowerCase(Locale.ROOT).contains("steam.exe")) {
-                    return s;
+                if (s.contains("csgo.exe")) {
+                    return s.substring(7);
                 }
             }
         } catch (IOException e) {
-            ConsoleManager.getConsole().printError("Throw Exception while Try getSteamPath!");
             e.printStackTrace();
+            ConsoleManager.getConsole().printError("Throw Exception while Try getSteamPath!");
         }
         return "";
     }
