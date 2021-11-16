@@ -77,7 +77,7 @@ public class MinimizeTrayConsole implements GameConsole {
                     .append(", Modifiers: ").append(e.getModifiers())
                     .append(", ID: ").append(e.getID())
                     .append(", ActionCommand: ").append(e.getActionCommand());
-            System.out.println(builder);
+//            System.out.println(builder);
             if (e.getModifiers() == 0) {
                 if (!ManagerPanel.isShowing()) {
                     ManagerPanel.showManagerPanel();
@@ -109,9 +109,16 @@ public class MinimizeTrayConsole implements GameConsole {
                     case PausablePlayer.PLAYING -> status = "Pause";
                 }
 
-                menu.add(createItem(status + " Music", e -> {
-                    CustomMusicFunction.pauseLobbyMusic();
-                }));
+                if (!status.equals("")) {
+                    menu.add(createItem("Play Music", e -> {
+                        CustomMusicFunction.stopLobbyMusic();
+                        CustomMusicFunction.startLobbyMusic();
+                    }));
+                } else {
+                    menu.add(createItem(status + " Music", e -> {
+                        CustomMusicFunction.pauseLobbyMusic();
+                    }));
+                }
 
                 if (CustomMusicFunction.getLobbyMusicStatus() != PausablePlayer.NOTINIT) {
                     menu.add(createItem("Stop Music", e -> {
@@ -147,7 +154,7 @@ public class MinimizeTrayConsole implements GameConsole {
                         int value = slider.getValue();
                         label.setText("" + value);
 //                System.out.println("Volume: " + value);
-                        CustomMusicFunction.setLobbyMusicGain(value);
+                        CustomMusicFunction.setLobbyMusicGain(value,false);
                     });
 
                     panel.setLayout(SettingsPanel.VERTICAL_LAYOUT);
@@ -182,10 +189,9 @@ public class MinimizeTrayConsole implements GameConsole {
             SocketTransfer.getInstance().shutdown(true);
         }));
 
-        menu.add(createItem("Debug", e -> {
-            trayIcon.displayMessage("Caption","Debug Text Debug", TrayIcon.MessageType.ERROR);
-        }));
-
+//        menu.add(createItem("Debug", e -> {
+//            trayIcon.displayMessage("Caption","Debug Text Debug", TrayIcon.MessageType.ERROR);
+//        }));
         trayIcon.setPopupMenu(menu);
     }
 

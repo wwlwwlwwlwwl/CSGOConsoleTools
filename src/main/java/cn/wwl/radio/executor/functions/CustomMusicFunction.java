@@ -304,12 +304,20 @@ public class CustomMusicFunction implements ConsoleFunction {
         }
     }
 
-    public static void setLobbyMusicGain(float targetVolume) {
+    public static void setLobbyMusicGain(float targetVolume,boolean fade) {
         if (player == null) {
             return;
         }
         volume = targetVolume;
-        player.fadeSetGain(volume);
+        if (fade) {
+            player.fadeSetGain(volume);
+        } else {
+            player.setGain(volume);
+        }
+    }
+
+    public static void setLobbyMusicGain(float targetVolume) {
+        setLobbyMusicGain(targetVolume,true);
     }
 
     public static float getLobbyMusicGain() {
