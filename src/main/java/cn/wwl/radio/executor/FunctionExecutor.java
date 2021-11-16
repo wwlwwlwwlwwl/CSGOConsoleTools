@@ -7,6 +7,7 @@ import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
 import cn.wwl.radio.utils.SteamUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,42 +20,41 @@ public class FunctionExecutor {
     private static final AtomicBoolean isStartTickThread = new AtomicBoolean(false);
     private static final Map<String, ConfigObject.ModuleObject> modules = new HashMap<>();
     private static final Map<String, ConsoleFunction> functions = new HashMap<>();
+    private static boolean isRegistered = false;
     public static final String HOOK_HEAD = "HookExecute";
 
     public static void executeFunction(String cmd) {
-        try {
-            //尝试解析玩家聊天 如果失败则忽略
-            //（反恐精英）wwl‎ @ 反恐精英起始点 ： 123123
-            //（****）wwl‎ @ ****起始点 ： 123123
-            if (cmd.contains("（反恐精英）") || cmd.contains("（****）")) {
-                String playerName = cmd.substring(6, cmd.indexOf("@")).trim();
-                String[] split = cmd.split(" ： ");
-                String talkMessage = split[split.length - 1].trim();
-                for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
-                    ConsoleFunction function = entry.getValue();
-                    if (function.isHookPlayerChat()) {
-                        function.onHookPlayerChat(playerName, talkMessage);
-                    }
-                }
+        String prefix = ConfigLoader.getConfigObject().getPrefix();
+        if (cmd.startsWith("Unknown")) {
+            if (!cmd.contains(prefix)) {
+                return;
             }
-        } catch (Exception ignored) {}
-
-        if (!(cmd.startsWith(FunctionExecutor.HOOK_HEAD) || cmd.startsWith("Unknown"))) {
+        } else if (cmd.startsWith(HOOK_HEAD)) {
+            //Nothing to do
+        } else {
             return;
         }
 
         String func = removeUnknownHead(cmd);
 
-        String newCommand = commandReplace(func);
-        if (!func.equalsIgnoreCase(newCommand)) { //处理自定义替换的字符串
-            SocketTransfer.getInstance().echoToConsole("Cmd [" + func + "] has been Replace to [" + newCommand + "] .");
-            func = newCommand;
-        }
-
         if (!modules.containsKey(func)) {
-//            ConsoleManager.getConsole().printError("got call for [" + func + "] But not find correct Module in Map!");
+            if (func.contains(prefix)) {
+                String wrong = "Wrong function Usage.";
+                String substring = func.equals(prefix) ? "" : func.substring(prefix.length() + 1);
+                List<String> guessList = new ArrayList<>();
+                for (Map.Entry<String, ConfigObject.ModuleObject> entry : modules.entrySet()) {
+                    if (entry.getKey().contains(substring)) {
+                        guessList.add(prefix + "_" + entry.getKey());
+                    }
+                }
+                if (!guessList.isEmpty()) {
+                    wrong += " do you mean " + guessList + "?";
+                }
+                SocketTransfer.getInstance().echoToConsole(wrong);
+            }
             return;
         }
+
         ConfigObject.ModuleObject moduleConfig = modules.get(func);
         ConsoleManager.getConsole().printToConsole("ModuleCall : [M: " + moduleConfig.getName() + " ,F: " + moduleConfig.getFunction() + " ,P: " + moduleConfig.getParameter() + "]");
         functions.get(moduleConfig.getFunction()).onExecuteFunction(moduleConfig.getParameter());
@@ -86,34 +86,80 @@ public class FunctionExecutor {
 
     public static void printHelp() {
         SocketTransfer.getInstance().echoToConsole("Help list : ");
-        modules.forEach((str, obj) -> {
-            SocketTransfer.getInstance().echoToConsole("cmd : " + str + " , {F: " + obj.getFunction() + "}");
-        });
+        modules.forEach((str, obj) -> SocketTransfer.getInstance().echoToConsole("cmd : " + str + " , {F: " + obj.getFunction() + "}"));
     }
 
     public static void registerGameHook() {
-        String prefix = ConfigLoader.getConfigObject().getPrefix();
-        StringBuilder aliasBuilder = new StringBuilder();
-        modules.forEach((name, moduleObject) -> {
-            String full_cmd = prefix + "_" + moduleObject.getCommand();
-            aliasBuilder  //alias jw_happy "echo HookExecute jw_happy"
-                    .append("alias ")
-                    .append(full_cmd)
-                    .append(" \"echo ")
-                    .append(HOOK_HEAD)
-                    .append(" ")
-                    .append(moduleObject.getCommand())
-                    .append("\";");
-        });
-//        ConsoleManager.getConsole().printToConsole("Alias: " + aliasBuilder);
-        SocketTransfer.getInstance().pushToConsole(aliasBuilder.toString());
-        ConsoleManager.getConsole().printToConsole("Register commands done.");
+        registerMessageHook();
 
         if (!isStartTickThread.get()) {
             startTickThread();
         }
 
         SteamUtils.initCSGODir();
+    }
+
+    private static void registerMessageHook() {
+        if (isRegistered) {
+            return;
+        }
+        isRegistered = true;
+
+        //Special message Hook
+        SocketTransfer.getInstance().addListenerTask("SpecialMessageHook", message -> {
+                for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
+                    ConsoleFunction function = entry.getValue();
+                    if (function.isHookSpecialMessage().isEmpty()) {
+                        continue;
+                    }
+
+                    for (String s : function.isHookSpecialMessage()) {
+                        if (message.contains(s)) {
+                            FunctionExecutor.executeMessageHook(function,message);
+                            break;
+                        }
+                    }
+                }
+        });
+
+        //Function Hook
+        SocketTransfer.getInstance().addListenerTask("FunctionHook", FunctionExecutor::executeFunction);
+
+        //Player Chat Hook
+        SocketTransfer.getInstance().addListenerTask("PlayerChatHook", message -> {
+            try {
+                //（反恐精英）wwl‎ @ 反恐精英起始点 ： 123123
+                //（****）wwl‎ @ ****起始点 ： 123123
+                if (message.contains("（反恐精英）") || message.contains("（****）") || message.contains("（恐怖分子）")) {
+                    String playerName = message.substring(6, message.indexOf("@")).trim();
+                    String[] split = message.split(" ： ");
+                    String talkMessage = split[split.length - 1].trim();
+                    for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
+                        ConsoleFunction function = entry.getValue();
+                        if (function.isHookPlayerChat()) {
+                            function.onHookPlayerChat(playerName, talkMessage);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                ConsoleManager.getConsole().printToConsole("Execute PlayerChat throw Exception!");
+                e.printStackTrace();
+            }
+        });
+
+        SocketTransfer.getInstance().addListenerTask("CommandReplace", str -> {
+            if (!str.contains("Unknown")) {
+                return;
+            }
+
+            String unknownHead = removeUnknownHead(str);
+            String newCommand = commandReplace(unknownHead);
+            if (!unknownHead.equalsIgnoreCase(newCommand)) { //处理自定义替换的字符串
+                SocketTransfer.getInstance().echoToConsole("Cmd [" + str + "] has been Replace to [" + newCommand + "] .");
+//                System.out.println("CMD: " + str + " -> " + newCommand);
+                SocketTransfer.getInstance().pushToConsole(newCommand);
+            }
+        });
     }
 
     public static void reloadModules() {

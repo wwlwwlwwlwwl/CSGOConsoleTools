@@ -12,8 +12,9 @@ public class ConfigObject {
     private boolean musicNetworkSearch = true;
     private String APIToken = "None";
     private String musicSource = "Netease";
+    private boolean lobbyMusic = true;
     private List<TextMarker> randomColors = TextMarker.availableColors();
-    private Map<String, String> autoReplaceCommand = Map.of(
+    private Map<String, String> autoReplaceCommand = new HashMap<>(Map.of(
             "0radioYes", "agree"
             , "0radioNo", "disagree"
             , "0radioThanks", "thank"
@@ -22,9 +23,9 @@ public class ConfigObject {
             , "0radioGoGo", "go"
             , "0radioWhat", "what"
             , "0radioVerynice", "wow"
-    );
+    ));
 
-    private List<ModuleObject> moduleList = List.of(ModuleObject.getTemplate());
+    private List<ModuleObject> moduleList = new ArrayList<>(List.of(ModuleObject.getTemplate()));
 
     public String getPrefix() {
         return prefix;
@@ -66,6 +67,50 @@ public class ConfigObject {
         return musicNetworkSearch;
     }
 
+    public boolean isLobbyMusic() {
+        return lobbyMusic;
+    }
+
+    public ConfigObject setPrefix(String prefix) {
+        this.prefix = prefix;
+        return this;
+    }
+
+    public ConfigObject setAutoReloadConfig(boolean autoReloadConfig) {
+        this.autoReloadConfig = autoReloadConfig;
+        return this;
+    }
+
+    public ConfigObject setGamePort(int gamePort) {
+        this.gamePort = gamePort;
+        return this;
+    }
+
+    public ConfigObject setRemoteConsolePort(int remoteConsolePort) {
+        this.remoteConsolePort = remoteConsolePort;
+        return this;
+    }
+
+    public ConfigObject setMusicNetworkSearch(boolean musicNetworkSearch) {
+        this.musicNetworkSearch = musicNetworkSearch;
+        return this;
+    }
+
+    public ConfigObject setAPIToken(String APIToken) {
+        this.APIToken = APIToken;
+        return this;
+    }
+
+    public ConfigObject setMusicSource(String musicSource) {
+        this.musicSource = musicSource;
+        return this;
+    }
+
+    public ConfigObject setLobbyMusic(boolean lobbyMusic) {
+        this.lobbyMusic = lobbyMusic;
+        return this;
+    }
+
     public static class ModuleObject {
         private String name;
         private boolean enabled;
@@ -73,9 +118,6 @@ public class ConfigObject {
         private String command;
         private String function;
         private List<String> parameter;
-
-        private ModuleObject() {
-        }
 
         public String getName() {
             return name;
@@ -101,6 +143,36 @@ public class ConfigObject {
             return parameter;
         }
 
+        public ModuleObject setParameter(List<String> parameter) {
+            this.parameter = parameter;
+            return this;
+        }
+
+        public ModuleObject setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public ModuleObject setEnabled(boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public ModuleObject setNote(String note) {
+            this.note = note;
+            return this;
+        }
+
+        public ModuleObject setCommand(String command) {
+            this.command = command;
+            return this;
+        }
+
+        public ModuleObject setFunction(String function) {
+            this.function = function;
+            return this;
+        }
+
         @Override
         public String toString() {
             return "ModuleObject{" +
@@ -111,6 +183,17 @@ public class ConfigObject {
                     ", function='" + function + '\'' +
                     ", parameter=" + parameter +
                     '}';
+        }
+
+        public static ModuleObject create() {
+            ModuleObject moduleObject = new ModuleObject();
+            moduleObject.name = "New Module " + new Random().nextInt(10000);
+            moduleObject.enabled = true;
+            moduleObject.note = "在这里可以填写任意内容,用于备忘";
+            moduleObject.command = "在游戏里调用这里的命令";
+            moduleObject.function = "CustomRadio";
+            moduleObject.parameter = List.of("ThrillEmote", "#gold#Hello world!");
+            return moduleObject;
         }
 
         public static ModuleObject getTemplate() {

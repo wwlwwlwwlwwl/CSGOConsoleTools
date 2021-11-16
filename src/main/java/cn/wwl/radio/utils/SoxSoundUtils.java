@@ -30,7 +30,7 @@ public class SoxSoundUtils {
             cache.add(saveDir);
             return;
         }
-
+        ConsoleManager.getConsole().printToConsole("Start cache Music: " + music.getName());
         POOL.execute(() -> {
             try {
                 String cmdLine = soxExecuteFile.getAbsolutePath() +

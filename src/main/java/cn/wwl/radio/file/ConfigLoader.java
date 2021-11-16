@@ -55,16 +55,11 @@ public class ConfigLoader {
     }
 
     public static void writeConfigObject() {
-        ConsoleManager.getConsole().printError("Save config file is temp Disabled.");
-//        if (cache_Object == null) {
-//            ConsoleManager.getConsole().printToConsole("CacheObject is null!");
-//            return;
-//        }
-//        try {
-//            writeObject(true);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        if (configObject == null) {
+            ConsoleManager.getConsole().printToConsole("configObject is null!");
+            return;
+        }
+        writeObject(true);
     }
 
     public static Charset getFileCharset(File file) {
@@ -152,7 +147,9 @@ public class ConfigLoader {
 
     private static void writeObject(boolean writeCache) {
         try {
+            ConfigWatcher.cancelOnce();
             String data = writeCache ? GSON.toJson(configObject) : GSON.toJson(new ConfigObject());
+//            System.out.println("DEBUG: [" + data + "]");
             FileWriter writer = new FileWriter(CONFIG_FILE, CONFIG_CHARSET);
             writer.write(data);
             writer.flush();

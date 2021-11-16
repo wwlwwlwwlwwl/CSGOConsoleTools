@@ -1,23 +1,19 @@
 package cn.wwl.radio.network;
 
 import cn.wwl.radio.console.ConsoleManager;
-import cn.wwl.radio.executor.ConsoleFunction;
 import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
+import cn.wwl.radio.network.task.ListenerTask;
+import cn.wwl.radio.utils.SteamUtils;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 public class SocketTransfer {
 
     public static final String ECHO_HEAD = "ConsoleTools";
-    private static int CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
+    public static final String NEW_CLIENT_LOGIN = "onNewClientLogin-";
+    private static int CONNECT_PORT;
     private static final SocketTransfer socketTransfer = new SocketTransfer();
 
     private Socket socket;
@@ -33,12 +30,15 @@ public class SocketTransfer {
     private final ConsoleListener listener = new ConsoleListener();
     private BufferedOutputStream outputStream = null;
     private long bootTimestamp = 0L;
+    private static String userName;
 
     private SocketTransfer(){}
 
     public void start() {
+        CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
         ConsoleManager.getConsole().printToConsole("System Charset: " + Charset.defaultCharset() + ", Config Charset: " + ConfigLoader.getConfigCharset());
         ConsoleManager.getConsole().printToConsole("Watching Port: " + CONNECT_PORT + ", Waiting Game start...");
+        SteamUtils.patchCSGOLaunchLine();
         boolean connected = false;
         while (!connected) {
             try {
@@ -78,23 +78,45 @@ public class SocketTransfer {
                 System.exit(1);
             }
         }
+
+        addListenerTask("NewClientChecker", read -> {
+            if (read.contains(SocketTransfer.NEW_CLIENT_LOGIN)) {
+                try {
+                    long timeStamp = Long.parseLong(read.split("-")[1].trim());
+                    if (timeStamp == SocketTransfer.getInstance().getBootTimestamp()) { //is my self
+                        return;
+                    }
+                    ConsoleManager.getConsole().printToConsole("New Client connected to game. Current Session closed.");
+                    SocketTransfer.getInstance().shutdown(false);
+                } catch (Exception ignored) {} //鬼知道会出现什么异常呢 如果解析失败就忽略吧
+            }
+        });
+
         registerCtrlCHook();
         FunctionExecutor.registerGameHook();
+        getPlayerName();
         echoLogin();
         SocketConsole.createRemoteListener();
         ConsoleManager.getConsole().startConsole();
     }
 
     private void registerCtrlCHook() {
-        Signal signal = new Signal("INT");
-        SignalHandler handler = (s) -> {
-            ConsoleManager.getConsole().printToConsole("Got Ctrl+C! Calling shutdown...");
-            shutdown(true);
-        };
-        Signal.handle(signal,handler);
+        try {
+            Signal signal = new Signal("INT");
+            SignalHandler handler = (s) -> {
+                ConsoleManager.getConsole().printToConsole("Got Ctrl+C! Calling shutdown...");
+                shutdown(true);
+            };
+            Signal.handle(signal,handler);
+        } catch (Exception e) {
+            ConsoleManager.getConsole().printToConsole("register Ctrl+C hook Failed. Ignoring.");
+        }
     }
 
     public void shutdown(boolean echoShutdown) {
+        if (socket == null) {
+            System.exit(0);
+        }
         try {
             ConsoleManager.getConsole().printToConsole("Start Shutdown now...");
             if (echoShutdown) {
@@ -102,17 +124,16 @@ public class SocketTransfer {
             }
             executor.shutdown();
             socket.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         System.exit(0);
     }
 
-    private static final String NEW_CLIENT_LOGIN = "onNewClientLogin-";
-
     private void echoLogin() {
+        String prefix = ConfigLoader.getConfigObject().getPrefix();
         pushToConsole("echo " + NEW_CLIENT_LOGIN + bootTimestamp);
-        pushToConsole("showconsole;clear");
+        pushToConsole("showconsole;clear;con_filter_enable 2;con_filter_text_out \"Unknown\";");
         pushToConsole("echo .......##.####.##......##.########.####..");
         pushToConsole("echo .......##..##..##..##..##.##........##...");
         pushToConsole("echo .......##..##..##..##..##.##........##...");
@@ -123,9 +144,20 @@ public class SocketTransfer {
         echoToConsole("Hello world! Hooked cmd!");
         echoToConsole("Cmd List: ");
         ConfigLoader.getConfigObject().getModuleList().forEach(module -> {
-            String prefix = ConfigLoader.getConfigObject().getPrefix();
+            String full_cmd = prefix + "_" + module.getCommand();
+            //alias jw_happy "echo HookExecute jw_happy"
+            String aliasBuilder = "alias " +
+                    full_cmd +
+                    " \"echo " +
+                    FunctionExecutor.HOOK_HEAD +
+                    " " +
+                    module.getCommand() +
+                    "\"";
+//        ConsoleManager.getConsole().printToConsole("Alias: " + aliasBuilder);
+            SocketTransfer.getInstance().pushToConsole(aliasBuilder);
             echoToConsole("Module: " + module.getName() + ", Function: " + module.getFunction() + ", " + prefix + "_" + module.getCommand());
         });
+        ConsoleManager.getConsole().printToConsole("Register commands done.");
     }
 
     private void echoDisconnect() {
@@ -137,6 +169,40 @@ public class SocketTransfer {
         pushToConsole("echo .##.....##....##....##..........##..##..##.##.....##.##....##..##.......##.....##.####");
         pushToConsole("echo .########.....##....########.....###..###...#######..##.....##.########.########..####");
         echoToConsole("ConsoleTools Disconnected now!");
+    }
+
+    public void addListenerTask(String name, ListenerTask task) {
+        listener.addListener(name, task);
+    }
+
+    /**
+     * 获取玩家当前的ID
+     * @Warning 在获取到ID之前可能无法拿到准确的用户名称
+     * @return 玩家的ID, 在获取到之前会返回null
+     */
+    public String getPlayerName() {
+        if (this.userName == null) {
+            addListenerTask("GetPlayerName",new ListenerTask() {
+                private boolean remove;
+                @Override
+                public void listen(String message) {
+                    if (message.contains("\"name\" = ") && message.contains("unnamed")) {
+                        String name = message.substring(10,message.indexOf("\" ( def. \"unnamed\" )"));
+                        ConsoleManager.getConsole().printToConsole("Got player name: " + name);
+                        userName = name;
+                        remove = true;
+                    }
+                }
+
+                @Override
+                public boolean isShouldRemove() {
+                    return remove;
+                }
+            });
+
+            pushToConsole("name");
+        }
+        return userName;
     }
 
     public static SocketTransfer getInstance() {
@@ -169,137 +235,8 @@ public class SocketTransfer {
             e.printStackTrace();
         }
     }
-/*
-    public void debug() {
-        try {
-            for (Charset value : Charset.availableCharsets().values()) {
-                try {
-                    value.newEncoder();
-                } catch (UnsupportedOperationException e) {
-                    System.out.println("!!!Unsupported Encode " + value + " , Ignored now.");
-                    continue;
-                }
-                System.out.println("Start debug charset : " + value);
-                Socket sock = new Socket();
-                sock.connect(new InetSocketAddress(CONNECT_PORT));
-                System.out.println("Temp socket connect success.");
-                BufferedWriter stream = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream(),value));
-                stream.write("echo 中文测试 > Encode : " + value + "\n");
-                stream.flush();
-                System.out.println("Data flushed. Encode : " + value);
-                stream.close();
-                sock.close();
-                System.out.println("Work done. Sleep 500ms");
-                Thread.sleep(500);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-*/
+
     public void echoToConsole(String str) {
         pushToConsole("echo \"" + ECHO_HEAD + " > " + str + "\"");
-    }
-
-    /**
-     * 循环监听游戏内控制台的输出 并重定向至虚拟的控制台
-     */
-    public static class ConsoleListener implements Runnable {
-
-        private int discCount = 0;
-        @Override
-        public void run() {
-            Socket socket = SocketTransfer.getInstance().getSocket();
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(),StandardCharsets.UTF_8));
-                while (!Thread.currentThread().isInterrupted()) {
-                    String read = "";
-                    try {
-                        read = reader.readLine();
-                    } catch (Exception e) {
-                        continue;
-                    }
-
-                    //控制台在整活 多半游戏已经关了
-                    if (discCount >= 20) {
-                        ConsoleManager.getConsole().printToConsole("Disconnected from game. Game closed.");
-                        SocketTransfer.getInstance().shutdown(false);
-                    }
-
-                    if (read == null || read.isEmpty()) {
-                        discCount++;
-                        continue;
-                    }
-
-
-                    if (read.contains(SocketTransfer.ECHO_HEAD)) { //不要重复抓取
-                        continue;
-                    }
-
-                    if (read.contains(NEW_CLIENT_LOGIN)) {
-                        try {
-                        long timeStamp = Long.parseLong(read.split("-")[1].trim());
-//                        ConsoleManager.getConsole().printToConsole("Current Boot : " + SocketTransfer.getInstance().getBootTimestamp() + " , newClient : " + timeStamp);
-                        if (timeStamp == SocketTransfer.getInstance().getBootTimestamp()) { //is my self
-                            continue;
-                        }
-                        ConsoleManager.getConsole().printToConsole("New Client connected to game. Current Session closed.");
-                        SocketTransfer.getInstance().shutdown(false);
-                        break;
-                        } catch (Exception e) { //鬼知道会出现什么异常呢 如果解析失败就忽略吧
-                            continue;
-                        }
-                    }
-
-                    ConsoleFunction function = isContainHookedMessage(read);
-                    if (function != null) {
-                        FunctionExecutor.executeMessageHook(function,read);
-                        continue;
-                    }
-
-                    discCount = 0;
-                    try {
-                        FunctionExecutor.executeFunction(read);
-                    } catch (Exception e) {
-                        ConsoleManager.getConsole().printToConsole("Throw Exception on Execute Command : " + read);
-                    }
-                    ConsoleManager.getConsole().redirectGameConsole(read);
-                    SocketConsole.onGameConsoleMessage(read);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        private final Map<String, ConsoleFunction> func = new HashMap<>();
-        private boolean hookInited = false;
-
-        private ConsoleFunction isContainHookedMessage(String message) {
-            if (func.isEmpty() && !hookInited) {
-                Map<String, ConsoleFunction> functions = FunctionExecutor.getFunctions();
-                for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
-                    List<String> hookMessage = entry.getValue().isHookSpecialMessage();
-                    if (hookMessage == null || hookMessage.isEmpty()) {
-                        continue;
-                    }
-                    hookMessage.forEach(s -> func.put(s,entry.getValue()));
-                }
-                hookInited = true;
-            }
-
-            for (Map.Entry<String, ConsoleFunction> entry : func.entrySet()) {
-                if (message.contains(entry.getKey())) {
-                    return entry.getValue();
-                }
-            }
-
-            return null;
-        }
     }
 }

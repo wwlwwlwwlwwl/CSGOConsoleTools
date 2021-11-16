@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class ConfigWatcher implements Runnable {
 
     private static final ScheduledExecutorService watcherExecutor = Executors.newSingleThreadScheduledExecutor();
+    private static boolean cancelOnce;
     private static long previousEditTime;
 
     public static void startWatchConfig() {
@@ -21,6 +22,10 @@ public class ConfigWatcher implements Runnable {
             ConsoleManager.getConsole().printToConsole("Start ConfigWatcher Thread...");
             watcherExecutor.scheduleAtFixedRate(new ConfigWatcher(),0,1000, TimeUnit.MILLISECONDS);
         }
+    }
+
+    public static void cancelOnce() {
+        cancelOnce = true;
     }
 
     @Override
@@ -39,6 +44,10 @@ public class ConfigWatcher implements Runnable {
 
         if (previousEditTime != currentModified) {
             previousEditTime = currentModified;
+            if (cancelOnce) {
+                cancelOnce = false;
+                return;
+            }
             ConsoleManager.getConsole().printToConsole("ConfigFile has been changed! Reloading Config...");
             if (ConfigLoader.loadConfigObject(true)) {
                 ConsoleManager.getConsole().printToConsole("Reload done.");

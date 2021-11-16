@@ -13,7 +13,8 @@ public class NeteaseMusicSource implements MusicSource {
 
     //https://163.lpddr5.cn/
     //https://api.music.imsyy.top/
-    private static final String API_LINK = "https://v2.alapi.cn/api/music";
+    //https://v2.alapi.cn/api/music 需要API_KEY
+    private static final String API_LINK = "https://163.lpddr5.cn";
     private static final String API_TOKEN = ConfigLoader.getConfigObject().getAPIToken();
 
     @Override
@@ -22,12 +23,8 @@ public class NeteaseMusicSource implements MusicSource {
             return List.of();
         }
 
-        if (API_TOKEN.equals("None")) {
-            ConsoleManager.getConsole().printError("API_KEY not Set! Cannot Search music!");
-            return List.of();
-        }
         try {
-            Document page = Jsoup.connect(API_LINK + "/search")
+            Document page = Jsoup.connect(API_LINK + "/cloudsearch")
                     .ignoreContentType(true)
                     .ignoreHttpErrors(true)
                     .followRedirects(true)
@@ -36,7 +33,7 @@ public class NeteaseMusicSource implements MusicSource {
                     .data(
                             "token", API_TOKEN,
                             "type", "1",
-                            "keyword", name,
+                            "keywords", name,
                             "limit", "9"
                     )
                     .post();
@@ -51,7 +48,7 @@ public class NeteaseMusicSource implements MusicSource {
     @Override
     public String getMusicDownloadLink(MusicResult result) {
         try {
-            Document page = Jsoup.connect(API_LINK + "/url")
+            Document page = Jsoup.connect(API_LINK + "/song/url")
                     .ignoreContentType(true)
                     .ignoreHttpErrors(true)
                     .followRedirects(true)
@@ -80,7 +77,20 @@ public class NeteaseMusicSource implements MusicSource {
             return "";
         }
 
-        return mainTree.get("data").getAsJsonObject().get("url").getAsString();
+        JsonElement data = mainTree.get("data");
+        JsonObject object = null;
+        if (data.isJsonArray()) {
+            object = data.getAsJsonArray().get(0).getAsJsonObject();
+        } else {
+            object = data.getAsJsonObject();
+        }
+
+        String url = object.get("url").getAsString();
+        JsonElement freeTrialInfo = object.get("freeTrialInfo");
+        if (!freeTrialInfo.isJsonNull()) {
+            url = NEED_PAY;
+        }
+        return url;
     }
 
     private List<MusicResult> parseSearchMusic(String searchPage) {
@@ -92,7 +102,7 @@ public class NeteaseMusicSource implements MusicSource {
             return musicResults;
         }
 
-        JsonArray songsArray = mainTree.get("data").getAsJsonObject().get("songs").getAsJsonArray();
+        JsonArray songsArray = mainTree.get("result").getAsJsonObject().get("songs").getAsJsonArray();
 
         for (JsonElement element : songsArray) {
             MusicResult result = new MusicResult();
@@ -100,7 +110,7 @@ public class NeteaseMusicSource implements MusicSource {
             int id = object.get("id").getAsInt();
             String name = object.get("name").getAsString();
             String author;
-            JsonArray artists = object.get("artists").getAsJsonArray();
+            JsonArray artists = object.get("ar").getAsJsonArray();
             if (artists.size() == 1) {
                 author = artists.get(0).getAsJsonObject().get("name").getAsString();
             } else {

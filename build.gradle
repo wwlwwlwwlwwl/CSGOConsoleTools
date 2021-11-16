@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'cn.wwl'
-version '1.4.0'
+version '1.5.0'
 
 repositories {
     mavenCentral()
@@ -16,6 +16,15 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     // https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation 'org.jsoup:jsoup:1.14.3'
+    // https://mvnrepository.com/artifact/com.googlecode.soundlibs/jlayer
+    // implementation 'com.googlecode.soundlibs:jlayer:1.0.1.4'
+    // Used. But put in The Java folder for Recompile
+    // https://mvnrepository.com/artifact/me.tongfei/progressbar
+//    implementation 'me.tongfei:progressbar:0.9.2'
+    // https://mvnrepository.com/artifact/org.jline/jline
+//    implementation 'org.jline:jline:3.21.0'
+    // https://mvnrepository.com/artifact/com.intellij/forms_rt
+     implementation 'com.intellij:forms_rt:7.0.3'
 }
 
 test {

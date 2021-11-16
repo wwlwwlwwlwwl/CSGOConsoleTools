@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class SocketConsole {
 
     private static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
-    private static final Map<Integer, RemoteListenerRunnable> SOCKET_MAP = new HashMap<>();
+    private static final Map<Socket, RemoteListenerRunnable> SOCKET_MAP = new HashMap<>();
     private static int port = -1;
 
     public static void createRemoteListener() {
@@ -47,12 +47,14 @@ public class SocketConsole {
     private static void startListener() throws IOException {
         ServerSocket socket = new ServerSocket(port);
         ConsoleManager.getConsole().printToConsole("RemoteClient Listener start at port: " + port);
+        //Push message to Remote client.
+        SocketTransfer.getInstance().addListenerTask("RemoteClientHook", SocketConsole::onGameConsoleMessage);
         while (socket.isBound()) {
             Socket accept = socket.accept();
             ConsoleManager.getConsole().printToConsole("New Remote client connect from: " + accept.getInetAddress() + ":" + accept.getPort());
             try {
                 RemoteListenerRunnable command = new RemoteListenerRunnable(accept);
-                SOCKET_MAP.put(accept.getLocalPort(),command);
+                SOCKET_MAP.put(accept,command);
                 executor.execute(command);
             } catch (IOException e) {
                 ConsoleManager.getConsole().printError("Try service " + accept + " Throw exception!");
@@ -62,8 +64,15 @@ public class SocketConsole {
     }
 
     public static void onGameConsoleMessage(String msg) {
-        for (Map.Entry<Integer, RemoteListenerRunnable> entry : SOCKET_MAP.entrySet()) {
-            entry.getValue().onReceiveMessage(msg);
+        for (Map.Entry<Socket, RemoteListenerRunnable> entry : SOCKET_MAP.entrySet()) {
+            try {
+                entry.getValue().pushToRemote(msg);
+            } catch (Exception e) {
+                ConsoleManager.getConsole().printError("Try push Message to " + entry.getKey().toString() + " Failed!");
+                try {
+                    entry.getValue().closeConnection();
+                } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -80,14 +89,6 @@ public class SocketConsole {
                 this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(),StandardCharsets.UTF_8));
             } catch (IOException e) {
                 throw new IOException("Try create IO Socket throw Exception!",e);
-            }
-        }
-
-        public void onReceiveMessage(String msg) {
-            try {
-                pushToRemote(msg);
-            } catch (IOException e) {
-                ConsoleManager.getConsole().printError("Push Message to " + socket + " Failed! Because: " + e.getMessage());
             }
         }
 
@@ -113,8 +114,17 @@ public class SocketConsole {
             }
         }
 
-        public Socket getSocket() {
-            return socket;
+        public void closeConnection() {
+            try {
+                writer.flush();
+                writer.close();
+            } catch (Exception ignored) {}
+            try {
+                reader.close();
+            } catch (Exception ignored) {}
+            try {
+                socket.close();
+            } catch (Exception ignored) {}
         }
     }
 }
