@@ -14,16 +14,7 @@ public class ConfigObject {
     private String musicSource = "Netease";
     private boolean lobbyMusic = true;
     private List<TextMarker> randomColors = TextMarker.availableColors();
-    private Map<String, String> autoReplaceCommand = new HashMap<>(Map.of(
-            "0radioYes", "agree"
-            , "0radioNo", "disagree"
-            , "0radioThanks", "thank"
-            , "0radioNice", "nice"
-            , "0radioGoodzz", "zzyyds"
-            , "0radioGoGo", "go"
-            , "0radioWhat", "what"
-            , "0radioVerynice", "wow"
-    ));
+    private Map<String, String> autoReplaceCommand = new HashMap<>();
 
     private List<ModuleObject> moduleList = new ArrayList<>(List.of(ModuleObject.getTemplate()));
 
