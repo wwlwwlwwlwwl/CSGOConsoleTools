@@ -1,5 +1,6 @@
 package cn.wwl.radio.executor.functions;
 
+import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
 import cn.wwl.radio.music.MusicManager;
 import cn.wwl.radio.music.MusicResult;
 import cn.wwl.radio.console.ConsoleManager;
@@ -274,6 +275,7 @@ public class CustomMusicFunction implements ConsoleFunction {
             player.play();
             SocketTransfer.getInstance().echoToConsole("Now playing Music: " + music.getName());
             ConsoleManager.getConsole().printToConsole("Now playing Music: " + music.getName());
+            MinimizeTrayConsole.updatePopupMenu();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -287,6 +289,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         player.fadeExit();
         player = null;
         isAllowPlayMusic = false;
+        MinimizeTrayConsole.updatePopupMenu();
     }
 
     public static void pauseLobbyMusic() {
@@ -351,22 +354,27 @@ public class CustomMusicFunction implements ConsoleFunction {
         SocketTransfer.getInstance().addListenerTask("LobbyMusicWatcher",str -> {
             String playerName = SocketTransfer.getInstance().getPlayerName();
 
-            if ((playerName == null || str.contains(playerName)) && str.contains("已连接")) {
+            if ((playerName == null || str.contains(playerName)) && str.contains("已连接")) { //玩家连接入服务器后的文字
                 isAllowPlayMusic = false;
                 return;
             }
 
-            if (str.contains("Not connected to server")) {
+            if (str.contains("Not connected to server")) { //Status 获取玩家不在服务器中
                 isAllowPlayMusic = true;
                 return;
             }
 
-            if (str.contains("materials/panorama/images/ui_textures/flare.png")) { //结束应该会有这个吧...
+            if (str.contains("materials/panorama/images/ui_textures/flare.png")) { //获取资源失败 结束应该会有这个吧...
                 isAllowPlayMusic = true;
                 return;
             }
 
-            if (str.contains("# userid name uniqueid")) {
+            if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个
+                isAllowPlayMusic = true;
+                return;
+            }
+
+            if (str.contains("# userid name uniqueid")) { //Status 玩家在游戏中
                 isAllowPlayMusic = false;
                 return;
             }

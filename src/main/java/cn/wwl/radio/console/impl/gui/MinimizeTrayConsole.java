@@ -94,7 +94,14 @@ public class MinimizeTrayConsole implements GameConsole {
         }
     }
 
-    private void updatePopupMenu(TrayIcon trayIcon) {
+    public static void updatePopupMenu() {
+        if (trayIcon == null) {
+            return;
+        }
+        updatePopupMenu(trayIcon);
+    }
+
+    private static void updatePopupMenu(TrayIcon trayIcon) {
         PopupMenu menu = new PopupMenu("Menu");
 
         if (SocketTransfer.getInstance().getSocket() == null || !SocketTransfer.getInstance().getSocket().isConnected()) {
@@ -195,7 +202,7 @@ public class MinimizeTrayConsole implements GameConsole {
         trayIcon.setPopupMenu(menu);
     }
 
-    private MenuItem createItem(String text,ActionListener action) {
+    private static MenuItem createItem(String text, ActionListener action) {
         MenuItem item = new MenuItem(text);
         item.addActionListener(action);
         item.addActionListener(e -> updatePopupMenu(trayIcon));
