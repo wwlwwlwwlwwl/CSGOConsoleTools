@@ -118,21 +118,18 @@ public class MinimizeTrayConsole implements GameConsole {
 
                 if (!status.equals("")) {
                     menu.add(createItem("Play Music", e -> {
-                        CustomMusicFunction.stopLobbyMusic();
+                        CustomMusicFunction.stopLobbyMusic(false);
                         CustomMusicFunction.startLobbyMusic();
                     }));
                 } else {
                     menu.add(createItem(status + " Music", e -> {
                         CustomMusicFunction.pauseLobbyMusic();
                     }));
-                }
 
-                if (CustomMusicFunction.getLobbyMusicStatus() != PausablePlayer.NOTINIT) {
                     menu.add(createItem("Stop Music", e -> {
                         CustomMusicFunction.stopLobbyMusic();
                     }));
                 }
-
 
                 menu.add(createItem("LobbyMusic Volume", e -> {
                     int musicGain = (int)CustomMusicFunction.getLobbyMusicGain();

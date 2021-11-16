@@ -282,11 +282,20 @@ public class CustomMusicFunction implements ConsoleFunction {
     }
 
     public static void stopLobbyMusic() {
+        stopLobbyMusic(true);
+    }
+
+    public static void stopLobbyMusic(boolean fade) {
         if (player == null) {
             return;
         }
 
-        player.fadeExit();
+        if (fade) {
+            player.fadeExit();
+        } else {
+            player.stop();
+            player.close();
+        }
         player = null;
         isAllowPlayMusic = false;
         MinimizeTrayConsole.updatePopupMenu();
