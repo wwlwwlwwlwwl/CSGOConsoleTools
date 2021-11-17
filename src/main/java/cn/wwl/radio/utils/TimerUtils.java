@@ -10,4 +10,19 @@ public class TimerUtils {
         timer.schedule(callWhat,ms);
         return callWhat;
     }
+
+    public static TimerTask callMeLater(long ms, TimerCallTask callWhat) {
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                callWhat.call();
+            }
+        };
+        timer.schedule(task,ms);
+        return task;
+    }
+
+    public interface TimerCallTask {
+        void call();
+    }
 }

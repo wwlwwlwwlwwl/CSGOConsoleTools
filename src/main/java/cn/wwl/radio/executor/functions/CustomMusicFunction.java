@@ -12,6 +12,7 @@ import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.SoxSoundUtils;
 import cn.wwl.radio.utils.SteamUtils;
 import cn.wwl.radio.utils.TextMarker;
+import cn.wwl.radio.utils.TimerUtils;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.advanced.PausablePlayer;
 
@@ -20,10 +21,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 
 public class CustomMusicFunction implements ConsoleFunction {
 
@@ -41,6 +39,7 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static boolean enableLobbyMusic = ConfigLoader.getConfigObject().isLobbyMusic();
     private static final List<MusicResult> previusResult = new ArrayList<>();
     private static final List<File> lobbyMusics = new ArrayList<>();
+    private static final List<File> playedMusics = new ArrayList<>();
     private static PausablePlayer player;
 
     private static float volume = -20.0F;
@@ -281,7 +280,17 @@ public class CustomMusicFunction implements ConsoleFunction {
 
     public static void startLobbyMusic() {
         Random random = new Random();
-        File music = lobbyMusics.get(random.nextInt(lobbyMusics.size() - 1));
+        if (lobbyMusics.size() == playedMusics.size()) {
+            playedMusics.clear();
+        }
+        File music = null;
+        while (music == null) {
+         File tempMusic = lobbyMusics.get(random.nextInt(lobbyMusics.size() - 1));
+         if (!playedMusics.contains(tempMusic)) {
+             playedMusics.add(tempMusic);
+             music = tempMusic;
+         }
+        }
         try {
             player = new PausablePlayer(new FileInputStream(music));
             player.play();
@@ -388,8 +397,9 @@ public class CustomMusicFunction implements ConsoleFunction {
                 return;
             }
 
-            if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个
-                isAllowPlayMusic = true;
+            if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个 !暂停也会出现!
+                //给退出到主界面一点时间
+                TimerUtils.callMeLater(500, () -> SocketTransfer.getInstance().pushToConsole("status"));
                 return;
             }
 
@@ -434,7 +444,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                         if (player != null && player.getPlayerStatus() == PausablePlayer.PLAYING) {
                             ConsoleManager.getConsole().printToConsole("LobbyMusic Pause");
                             SocketTransfer.getInstance().echoToConsole("LobbyMusic now Paused.");
-                            player.fadePause();
+                            pauseLobbyMusic();
                         }
                     }
                 }
