@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FunctionExecutor {
 
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private static final AtomicBoolean isStartTickThread = new AtomicBoolean(false);
+    private static boolean isStartTickThread = false;
     private static final Map<String, ConfigObject.ModuleObject> modules = new HashMap<>();
     private static final Map<String, ConsoleFunction> functions = new HashMap<>();
     private static boolean isRegistered = false;
@@ -30,7 +30,9 @@ public class FunctionExecutor {
                 return;
             }
         } else if (cmd.startsWith(HOOK_HEAD)) {
-            //Nothing to do
+            if (cmd.contains(ConfigLoader.getConfigObject().getPrefix())) {
+                cmd = cmd.replace(ConfigLoader.getConfigObject().getPrefix() + "_", "");
+            }
         } else {
             return;
         }
@@ -92,7 +94,7 @@ public class FunctionExecutor {
     public static void registerGameHook() {
         registerMessageHook();
 
-        if (!isStartTickThread.get()) {
+        if (!isStartTickThread) {
             startTickThread();
         }
 
@@ -174,14 +176,18 @@ public class FunctionExecutor {
     }
 
     private static void startTickThread() {
-        isStartTickThread.set(true);
-        executor.scheduleAtFixedRate(() -> {
-            functions.forEach((name, func) -> {
-                if (func.isRequireTicking()) {
-                    func.onTick();
-                }
-            });
-        }, 0, 10, TimeUnit.MILLISECONDS);
+        isStartTickThread = true;
+        executor.scheduleAtFixedRate(() ->
+                functions.forEach((name, func) -> {
+                    if (func.isRequireTicking()) {
+                        try {
+                            func.onTick();
+                        } catch (Exception e) {
+                            ConsoleManager.getConsole().printError("Try Tick function: " + name + " Throw Exception!");
+                            e.printStackTrace();
+                        }
+                    }
+        }), 0, 10, TimeUnit.MILLISECONDS);
     }
 
     private static String commandReplace(String oldCommand) {

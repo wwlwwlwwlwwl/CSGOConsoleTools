@@ -29,9 +29,8 @@ public class MinimizeTrayConsole implements GameConsole {
 
     @Override
     public void init() {
-        trayIcon = new TrayIcon(IMAGE);
         Dimension trayIconSize = SystemTray.getSystemTray().getTrayIconSize();
-        trayIcon.setImage(IMAGE.getScaledInstance((int) trayIconSize.getWidth(), (int) trayIconSize.getHeight(), Image.SCALE_SMOOTH));
+        trayIcon = new TrayIcon(IMAGE.getScaledInstance((int) trayIconSize.getWidth(), (int) trayIconSize.getHeight(), Image.SCALE_SMOOTH));
         ManagerPanel.initManagerPanel();
 //        ManagerPanel.showManagerPanel();
         startTray(true);
@@ -122,13 +121,9 @@ public class MinimizeTrayConsole implements GameConsole {
                         CustomMusicFunction.startLobbyMusic();
                     }));
                 } else {
-                    menu.add(createItem(status + " Music", e -> {
-                        CustomMusicFunction.pauseLobbyMusic();
-                    }));
+                    menu.add(createItem(status + " Music", e -> CustomMusicFunction.pauseLobbyMusic()));
 
-                    menu.add(createItem("Stop Music", e -> {
-                        CustomMusicFunction.stopLobbyMusic();
-                    }));
+                    menu.add(createItem("Stop Music", e -> CustomMusicFunction.stopLobbyMusic()));
                 }
 
                 menu.add(createItem("LobbyMusic Volume", e -> {
@@ -189,9 +184,7 @@ public class MinimizeTrayConsole implements GameConsole {
             }
         }));
 
-        menu.add(createItem("Exit", e -> {
-            SocketTransfer.getInstance().shutdown(true);
-        }));
+        menu.add(createItem("Exit", e -> SocketTransfer.getInstance().shutdown(true)));
 
 //        menu.add(createItem("Debug", e -> {
 //            trayIcon.displayMessage("Caption","Debug Text Debug", TrayIcon.MessageType.ERROR);

@@ -74,9 +74,9 @@ public class CustomMusicFunction implements ConsoleFunction {
             playLobbyMusic();
         }
 
-        if (isBootFailed) {
-            return;
-        }
+//        if (isBootFailed) {
+//            return;
+//        }
     }
 
     @Override
@@ -122,9 +122,14 @@ public class CustomMusicFunction implements ConsoleFunction {
             volumeKey = message.split("\" = \"")[0].replace("\"","").trim();
             ConsoleManager.getConsole().printToConsole("Find Volume Key: " + volumeKey);
             return;
-        }else if (message.contains("StopMusicPlaying") && !message.contains("echo")) {
+        }
+
+        if (message.contains("StopMusicPlaying") && !message.contains("echo")) {
             stopMusic();
-        } else if (message.contains(LOCALVERSION_SELECT)) {
+            return;
+        }
+
+        if (message.contains(LOCALVERSION_SELECT)) {
             String removeUnknownHead = FunctionExecutor.removeUnknownHead(message);
             int musicCount = Integer.parseInt(removeUnknownHead.substring(LOCALVERSION_SELECT.length()).trim());
             File music = SoxSoundUtils.getCachedMusics().get(musicCount);
@@ -145,16 +150,21 @@ public class CustomMusicFunction implements ConsoleFunction {
             return;
         }
 
+        if (isLocalVersion) {
+            return;
+        }
+
         if (!isEnableSearch) {
             sayTeamRadio(TextMarker.红色.getHumanCode() + "点歌功能已被禁用.");
             return;
         }
 
         SocketTransfer.getInstance().pushToConsole("key_listboundkeys;clear");
-        if (content.equals(SEARCH_COMMAND)) {
-            sayTeamRadio(TextMarker.金色.getHumanCode() + "请输入歌曲名称! (" + SEARCH_COMMAND + " 音乐名称)");
-            return;
-        } else if (content.contains(SEARCH_COMMAND)) {
+        if (content.contains(SEARCH_COMMAND)) {
+            if (content.equals(SEARCH_COMMAND)) {
+                sayTeamRadio(TextMarker.金色.getHumanCode() + "请输入歌曲名称! (" + SEARCH_COMMAND + " 音乐名称)");
+                return;
+            }
             String searchName = content.substring(7);
             ConsoleManager.getConsole().printToConsole("Call " + ConfigLoader.getConfigObject().getMusicSource() + " API Search : " + searchName);
             if (!SocketTransfer.getInstance().getPlayerName().equals(name)) {
@@ -186,14 +196,16 @@ public class CustomMusicFunction implements ConsoleFunction {
                 }
             }
             sayTeamMessage("请打开聊天查看所有内容,使用" + PLAY_COMMAND + " [序号] 来播放.");
-        } else if (content.equals(PLAY_COMMAND)) {
-            if (previusResult.isEmpty()) {
-                sayTeamRadio(TextMarker.红色.getHumanCode() + "请先使用" + SEARCH_COMMAND + " [歌曲名称] 搜索后再进行播放!");
-            } else {
-                sayTeamRadio(TextMarker.红色.getHumanCode() + "请使用" + PLAY_COMMAND + " [歌曲序号]来进行播放!");
-            }
         } else if (content.contains(PLAY_COMMAND)) {
-            int musicCount = 0;
+            if (content.equals(PLAY_COMMAND)) {
+                if (previusResult.isEmpty()) {
+                    sayTeamRadio(TextMarker.红色.getHumanCode() + "请先使用" + SEARCH_COMMAND + " [歌曲名称] 搜索后再进行播放!");
+                } else {
+                    sayTeamRadio(TextMarker.红色.getHumanCode() + "请使用" + PLAY_COMMAND + " [歌曲序号]来进行播放!");
+                }
+                return;
+            }
+            int musicCount;
             try {
                 musicCount = Integer.parseInt(content.substring(PLAY_COMMAND.length()).trim());
             } catch (Exception e) {
@@ -356,9 +368,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo LobbyMusicWatcher_MusicPause\"");
         SocketTransfer.getInstance().pushToConsole("status");
 //        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
-        JavaSoundAudioDevice.listenEvent(e -> {
-            e.setVolume(volume);
-        });
+        JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
 
         SocketTransfer.getInstance().addListenerTask("LobbyMusicWatcher",str -> {
             String playerName = SocketTransfer.getInstance().getPlayerName();
@@ -444,7 +454,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         }
 
         File[] files = lobbyDir.listFiles();
-        if (files.length == 0) {
+        if (files == null || files.length == 0) {
             ConsoleManager.getConsole().printToConsole("LobbyMusic dir is Empty! Please place music In folder!");
             cacheFailed = true;
             return;
@@ -474,7 +484,10 @@ public class CustomMusicFunction implements ConsoleFunction {
 
         File inputFile = new File(SteamUtils.getCsgoPath(),"voice_input.wav");
         if (inputFile.exists()) {
-            inputFile.delete();
+            if (inputFile.delete()) {
+                ConsoleManager.getConsole().printError("Try delete Exist VoiceInput failed!");
+                return;
+            }
         }
 
         try {

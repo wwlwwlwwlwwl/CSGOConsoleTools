@@ -1,6 +1,7 @@
 package cn.wwl.radio.console.impl.gui;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
 import cn.wwl.radio.utils.TimerUtils;
@@ -30,7 +31,6 @@ public class SettingsPanel {
 
     private static JFrame frame = new JFrame("SettingsPanel");
     private static JList<String> list = new JList<>();
-    private static ManagerPanel parent;
     private static boolean installOnce;
 
     private static List<Field> strClass = new ArrayList<>();
@@ -46,7 +46,6 @@ public class SettingsPanel {
     private static JPanel MODULE_DETAIL_PANEL = new JPanel();
 
     public SettingsPanel(ManagerPanel parent) {
-        this.parent = parent;
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -76,9 +75,7 @@ public class SettingsPanel {
             parent.closeSettingsPanel();
         });
 
-        saveButton.addActionListener(e -> {
-            saveConfig(true);
-        });
+        saveButton.addActionListener(e -> saveConfig(true));
     }
 
     public void init() {
@@ -165,12 +162,8 @@ public class SettingsPanel {
         MODULE_PANEL.setVisible(false);
 
         switch (val) {
-            case "Modules" -> {
-                MODULE_PANEL.setVisible(true);
-            }
-            case "Config" -> {
-                CONFIG_PANEL.setVisible(true);
-            }
+            case "Modules" -> MODULE_PANEL.setVisible(true);
+            case "Config" -> CONFIG_PANEL.setVisible(true);
         }
     }
 
@@ -268,15 +261,50 @@ public class SettingsPanel {
         enable.setText("Enable");
         enable.setSelected(moduleObject.isEnabled());
         setSkin(enable);
-        enable.addActionListener(e -> {
-            moduleObject.setEnabled(enable.isSelected());
-        });
+        enable.addActionListener(e -> moduleObject.setEnabled(enable.isSelected()));
         panel.add(enable);
 
         List<Field> strFields = Arrays.stream(moduleObject.getClass().getDeclaredFields())
                 .filter(f -> String.class.equals(f.getAnnotatedType().getType()))
                 .toList();
         for (Field strField : strFields) {
+            if (strField.getName().equals("function")) {
+                try {
+                    strField.setAccessible(true);
+                    JLabel label = new JLabel();
+                    JComboBox<String> comboBox = new JComboBox<>();
+                    label.setHorizontalAlignment(SwingConstants.LEFT);
+                    label.setVerticalAlignment(SwingConstants.TOP);
+                    label.setText(splitCaseStr(strField.getName()) + ": ");
+                    setSkin(label);
+                    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+                    FunctionExecutor.getFunctions().forEach((s, func) -> model.addElement(s));
+                    comboBox.setModel(model);
+                    comboBox.setSelectedItem(strField.get(moduleObject));
+                    setSkin(comboBox);
+                    Dimension dimension = new Dimension(150, 30);
+                    comboBox.setMinimumSize(dimension);
+                    comboBox.setPreferredSize(dimension);
+                    comboBox.addItemListener(e -> {
+                        if (!(e.getItem() instanceof String text)) {
+                            return;
+                        }
+                        try {
+                            strField.set(moduleObject, text);
+                        } catch (Exception ex) {
+                            ConsoleManager.getConsole().printError("Try set " + strField.getName() + " Value to [" + text + "] failed!");
+                            ex.printStackTrace();
+                        }
+                    });
+                    panel.add(label);
+                    panel.add(comboBox);
+                } catch (Exception e) {
+                    ConsoleManager.getConsole().printError("Try put Module " + moduleObject.getName() + " Value Parameter SelectBox Throw Exception!");
+                    e.printStackTrace();
+                }
+                continue;
+            }
+
             try {
                 strField.setAccessible(true);
                 JLabel label = new JLabel();
@@ -533,8 +561,8 @@ public class SettingsPanel {
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
-        mainPanel.setMinimumSize(new Dimension(900, 600));
-        mainPanel.setPreferredSize(new Dimension(900, 600));
+        mainPanel.setMinimumSize(new Dimension(1000, 600));
+        mainPanel.setPreferredSize(new Dimension(1000, 600));
         bottomPanel = new JPanel();
         bottomPanel.setLayout(new GridLayoutManager(1, 4, new Insets(5, 2, 5, 5), -1, -1, true, false));
         mainPanel.add(bottomPanel, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 1, true));
