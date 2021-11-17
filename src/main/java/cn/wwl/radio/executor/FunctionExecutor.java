@@ -132,10 +132,15 @@ public class FunctionExecutor {
             try {
                 //（反恐精英）wwl‎ @ 反恐精英起始点 ： 123123
                 //（****）wwl‎ @ ****起始点 ： 123123
+                //（反恐精英）wwl‎ ： #music
                 if (message.contains("（反恐精英）") || message.contains("（****）") || message.contains("（恐怖分子）")) {
-                    String playerName = message.substring(6, message.indexOf("@")).trim();
+                    String playerName = message.substring(6, (
+                            message.contains("@") ? message.indexOf("@") : message.indexOf(" ： ")
+                    )).trim();
                     String[] split = message.split(" ： ");
                     String talkMessage = split[split.length - 1].trim();
+                    ConsoleManager.getConsole().printToConsole("ChatHook : [P: " + playerName + " ,M: " + talkMessage + "]");
+
                     for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
                         ConsoleFunction function = entry.getValue();
                         if (function.isHookPlayerChat()) {
@@ -144,7 +149,7 @@ public class FunctionExecutor {
                     }
                 }
             } catch (Exception e) {
-                ConsoleManager.getConsole().printToConsole("Execute PlayerChat throw Exception!");
+                ConsoleManager.getConsole().printError("Execute PlayerChat throw Exception!");
                 e.printStackTrace();
             }
         });

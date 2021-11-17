@@ -1,6 +1,8 @@
 package cn.wwl.radio.network;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
+import cn.wwl.radio.console.impl.gui.TrayMessageCallback;
 import cn.wwl.radio.network.task.ListenerTask;
 
 import java.io.BufferedReader;
@@ -16,12 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ConsoleListener implements Runnable {
 
-    private final Map<String, ListenerTask> tasks = new ConcurrentHashMap<>();
+    private static final Map<String, ListenerTask> tasks = new ConcurrentHashMap<>();
     public void addListener(String name, ListenerTask listener) {
-        if (name == null || name.length() == 0 || listener == null) {
-            return;
-        }
-
         if (tasks.containsKey(name)) {
             ConsoleManager.getConsole().printError("Tasks Map already have Key: " + name + "! Check the task Register!");
             return;
@@ -48,7 +46,9 @@ public class ConsoleListener implements Runnable {
                 //控制台在整活 多半游戏已经关了
                 if (discCount >= 20) {
                     ConsoleManager.getConsole().printToConsole("Disconnected from game. Game closed.");
-                    SocketTransfer.getInstance().shutdown(false);
+//                    SocketTransfer.getInstance().shutdown(false);
+                    SocketTransfer.getInstance().restart();
+                    break;
                 }
 
                 if (read == null || read.isEmpty()) {
@@ -77,12 +77,6 @@ public class ConsoleListener implements Runnable {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

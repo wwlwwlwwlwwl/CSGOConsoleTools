@@ -34,6 +34,9 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static boolean isAllowPlayMusic;
     private static boolean isHookedMusicCommand = false;
 
+    //在控制台出现flare的时候肯定是结算界面 但是同时也会出现globe 而这时候玩家可能还没有退出游戏 所以写一个定时器在获取到flare之后暂时禁用globe的获取
+    private static boolean disableGlobe = false;
+
     private static boolean isEnableSearch = true;
     private static boolean isLocalVersion = !ConfigLoader.getConfigObject().isMusicNetworkSearch();
     private static boolean enableLobbyMusic = ConfigLoader.getConfigObject().isLobbyMusic();
@@ -263,7 +266,10 @@ public class CustomMusicFunction implements ConsoleFunction {
 
         if (player != null) {
             switch (player.getPlayerStatus()) {
-                case PausablePlayer.FINISHED -> startLobbyMusic();
+                case PausablePlayer.FINISHED -> {
+                    player = null;
+                    startLobbyMusic();
+                }
                 case PausablePlayer.PAUSED -> player.fadeResume();
                 case PausablePlayer.NOTSTARTED -> {
                     try {
@@ -279,19 +285,25 @@ public class CustomMusicFunction implements ConsoleFunction {
     }
 
     public static void startLobbyMusic() {
+        ConsoleManager.getConsole().printToConsole("Start Lobby Music.");
         Random random = new Random();
         if (lobbyMusics.size() == playedMusics.size()) {
             playedMusics.clear();
         }
         File music = null;
         while (music == null) {
-         File tempMusic = lobbyMusics.get(random.nextInt(lobbyMusics.size() - 1));
-         if (!playedMusics.contains(tempMusic)) {
-             playedMusics.add(tempMusic);
-             music = tempMusic;
-         }
+            File tempMusic = lobbyMusics.get(random.nextInt(lobbyMusics.size() - 1));
+//            System.out.println("Random new Music: " + tempMusic.getName());
+             if (!playedMusics.contains(tempMusic)) {
+                 playedMusics.add(tempMusic);
+                 music = tempMusic;
+             }
         }
         try {
+            if (player != null) {
+                player.fadeExit();
+                player = null;
+            }
             player = new PausablePlayer(new FileInputStream(music));
             player.play();
             SocketTransfer.getInstance().echoToConsole("Now playing Music: " + music.getName());
@@ -374,7 +386,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         isHookedMusicCommand = true;
         SocketTransfer.getInstance().pushToConsole("alias music_play \"echo LobbyMusicWatcher_MusicPlay\"");
         SocketTransfer.getInstance().pushToConsole("alias music_pause \"echo LobbyMusicWatcher_MusicPause\"");
-        SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo LobbyMusicWatcher_MusicPause\"");
+        SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo LobbyMusicWatcher_MusicStop\"");
         SocketTransfer.getInstance().pushToConsole("status");
 //        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
         JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
@@ -384,6 +396,7 @@ public class CustomMusicFunction implements ConsoleFunction {
 
             if ((playerName == null || str.contains(playerName)) && str.contains("已连接")) { //玩家连接入服务器后的文字
                 isAllowPlayMusic = false;
+                disableGlobe = false;
                 return;
             }
 
@@ -394,13 +407,16 @@ public class CustomMusicFunction implements ConsoleFunction {
 
             if (str.contains("materials/panorama/images/ui_textures/flare.png")) { //获取资源失败 结束应该会有这个吧...
                 isAllowPlayMusic = true;
+                //只要出现结算 那么就一直忽略这个指令 直到玩家重新连接入新游戏为止
+                disableGlobe = true;
                 return;
             }
 
-            if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个 !暂停也会出现!
-                //给退出到主界面一点时间
-                TimerUtils.callMeLater(500, () -> SocketTransfer.getInstance().pushToConsole("status"));
-                return;
+            if (!disableGlobe) {
+                if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个 !暂停也会出现!
+                    SocketTransfer.getInstance().pushToConsole("status");
+                    return;
+                }
             }
 
             if (str.contains("# userid name uniqueid")) { //Status 玩家在游戏中
@@ -425,7 +441,7 @@ public class CustomMusicFunction implements ConsoleFunction {
 
             if (str.toLowerCase(Locale.ROOT).contains("lobbymusicwatcher_")) {
                 String command = str.substring(18).trim();
-                System.out.println("Command: " + command);
+//                System.out.println("Command: " + command);
                 switch (command) {
                     case "MusicPlay" -> {
                         if (player != null && player.getPlayerStatus() == PausablePlayer.PAUSED) {
@@ -446,6 +462,12 @@ public class CustomMusicFunction implements ConsoleFunction {
                             SocketTransfer.getInstance().echoToConsole("LobbyMusic now Paused.");
                             pauseLobbyMusic();
                         }
+                    }
+                    case "MusicStop" -> {
+                        ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
+                        SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
+                        isAllowPlayMusic = false;
+                        stopLobbyMusic();
                     }
                 }
             }
