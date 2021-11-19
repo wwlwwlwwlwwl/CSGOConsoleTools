@@ -9,10 +9,9 @@ import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.music.MusicSource;
 import cn.wwl.radio.network.SocketTransfer;
-import cn.wwl.radio.utils.SoxSoundUtils;
-import cn.wwl.radio.utils.SteamUtils;
+import cn.wwl.radio.file.SoxSoundUtils;
+import cn.wwl.radio.file.SteamUtils;
 import cn.wwl.radio.utils.TextMarker;
-import cn.wwl.radio.utils.TimerUtils;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.advanced.PausablePlayer;
 
@@ -390,88 +389,6 @@ public class CustomMusicFunction implements ConsoleFunction {
         SocketTransfer.getInstance().pushToConsole("status");
 //        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
         JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
-
-        SocketTransfer.getInstance().addListenerTask("LobbyMusicWatcher",str -> {
-            String playerName = SocketTransfer.getInstance().getPlayerName();
-
-            if ((playerName == null || str.contains(playerName)) && str.contains("已连接")) { //玩家连接入服务器后的文字
-                isAllowPlayMusic = false;
-                disableGlobe = false;
-                return;
-            }
-
-            if (str.contains("Not connected to server")) { //Status 获取玩家不在服务器中
-                isAllowPlayMusic = true;
-                return;
-            }
-
-            if (str.contains("materials/panorama/images/ui_textures/flare.png")) { //获取资源失败 结束应该会有这个吧...
-                isAllowPlayMusic = true;
-                //只要出现结算 那么就一直忽略这个指令 直到玩家重新连接入新游戏为止
-                disableGlobe = true;
-                return;
-            }
-
-            if (!disableGlobe) {
-                if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个 !暂停也会出现!
-                    SocketTransfer.getInstance().pushToConsole("status");
-                    return;
-                }
-            }
-
-            if (str.contains("# userid name uniqueid")) { //Status 玩家在游戏中
-                isAllowPlayMusic = false;
-                return;
-            }
-
-            if (str.contains("Unknown") && str.toLowerCase(Locale.ROOT).contains("music")) {
-                String newStr = FunctionExecutor.removeUnknownHead(str);
-//                System.out.println("str: " + str + ", newStr: " + newStr);
-                try {
-                    volume = Float.parseFloat(newStr.substring(5));
-                    player.fadeSetGain(volume);
-                    ConsoleManager.getConsole().printToConsole("Music volume Set to " + volume);
-                    SocketTransfer.getInstance().echoToConsole("Music volume Set to " + volume);
-                } catch (Exception e) {
-//                    ConsoleManager.getConsole().printError("Try parse Volume value: [" + str + "] Throw exception!");
-//                    e.printStackTrace();
-                    SocketTransfer.getInstance().echoToConsole("Wrong Music command. Do you mean music[(+/-)Volume]?");
-                }
-            }
-
-            if (str.toLowerCase(Locale.ROOT).contains("lobbymusicwatcher_")) {
-                String command = str.substring(18).trim();
-//                System.out.println("Command: " + command);
-                switch (command) {
-                    case "MusicPlay" -> {
-                        if (player != null && player.getPlayerStatus() == PausablePlayer.PAUSED) {
-                            ConsoleManager.getConsole().printToConsole("LobbyMusic Resume");
-                            SocketTransfer.getInstance().echoToConsole("LobbyMusic now Resume.");
-                            player.fadeResume();
-                        }
-                        if (!isAllowPlayMusic) {
-                            ConsoleManager.getConsole().printToConsole("ForceUnlock lobbyMusic");
-                            SocketTransfer.getInstance().echoToConsole("Force Unlocking LobbyMusic...");
-                            isAllowPlayMusic = true;
-                            player = null;
-                        }
-                    }
-                    case "MusicPause" -> {
-                        if (player != null && player.getPlayerStatus() == PausablePlayer.PLAYING) {
-                            ConsoleManager.getConsole().printToConsole("LobbyMusic Pause");
-                            SocketTransfer.getInstance().echoToConsole("LobbyMusic now Paused.");
-                            pauseLobbyMusic();
-                        }
-                    }
-                    case "MusicStop" -> {
-                        ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
-                        SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
-                        isAllowPlayMusic = false;
-                        stopLobbyMusic();
-                    }
-                }
-            }
-        });
     }
 
     private void cacheLobbyMusic() {
@@ -559,6 +476,90 @@ public class CustomMusicFunction implements ConsoleFunction {
     private void init() {
         isInited = true;
         ConsoleManager.getConsole().printToConsole("Start init CustomMusic function...");
+        if (ConfigLoader.getConfigObject().isLobbyMusic()) {
+            SocketTransfer.getInstance().addListenerTask("LobbyMusicWatcher",str -> {
+                String playerName = SocketTransfer.getInstance().getPlayerName();
+
+                if ((playerName == null || str.contains(playerName)) && str.contains("已连接")) { //玩家连接入服务器后的文字
+                    isAllowPlayMusic = false;
+                    disableGlobe = false;
+                    return;
+                }
+
+                if (str.contains("Not connected to server")) { //Status 获取玩家不在服务器中
+                    isAllowPlayMusic = true;
+                    return;
+                }
+
+                if (str.contains("materials/panorama/images/ui_textures/flare.png")) { //获取资源失败 结束应该会有这个吧...
+                    isAllowPlayMusic = true;
+                    //只要出现结算 那么就一直忽略这个指令 直到玩家重新连接入新游戏为止
+                    disableGlobe = true;
+                    return;
+                }
+
+                if (!disableGlobe) {
+                    if (str.contains("materials\\panorama\\images\\icons\\ui\\globe.svg")) { //断开连接似乎会出现这个 !暂停也会出现!
+                        SocketTransfer.getInstance().pushToConsole("status");
+                        return;
+                    }
+                }
+
+                if (str.contains("# userid name uniqueid")) { //Status 玩家在游戏中
+                    isAllowPlayMusic = false;
+                    return;
+                }
+
+                if (str.contains("Unknown") && str.toLowerCase(Locale.ROOT).contains("music")) {
+                    String newStr = FunctionExecutor.removeUnknownHead(str);
+//                System.out.println("str: " + str + ", newStr: " + newStr);
+                    try {
+                        volume = Float.parseFloat(newStr.substring(5));
+                        player.fadeSetGain(volume);
+                        ConsoleManager.getConsole().printToConsole("Music volume Set to " + volume);
+                        SocketTransfer.getInstance().echoToConsole("Music volume Set to " + volume);
+                    } catch (Exception e) {
+//                    ConsoleManager.getConsole().printError("Try parse Volume value: [" + str + "] Throw exception!");
+//                    e.printStackTrace();
+                        SocketTransfer.getInstance().echoToConsole("Wrong Music command. Do you mean music[(+/-)Volume]?");
+                    }
+                }
+
+                if (str.toLowerCase(Locale.ROOT).contains("lobbymusicwatcher_")) {
+                    String command = str.substring(18).trim();
+//                System.out.println("Command: " + command);
+                    switch (command) {
+                        case "MusicPlay" -> {
+                            if (player != null && player.getPlayerStatus() == PausablePlayer.PAUSED) {
+                                ConsoleManager.getConsole().printToConsole("LobbyMusic Resume");
+                                SocketTransfer.getInstance().echoToConsole("LobbyMusic now Resume.");
+                                player.fadeResume();
+                            }
+                            if (!isAllowPlayMusic) {
+                                ConsoleManager.getConsole().printToConsole("ForceUnlock lobbyMusic");
+                                SocketTransfer.getInstance().echoToConsole("Force Unlocking LobbyMusic...");
+                                isAllowPlayMusic = true;
+                                player = null;
+                            }
+                        }
+                        case "MusicPause" -> {
+                            if (player != null && player.getPlayerStatus() == PausablePlayer.PLAYING) {
+                                ConsoleManager.getConsole().printToConsole("LobbyMusic Pause");
+                                SocketTransfer.getInstance().echoToConsole("LobbyMusic now Paused.");
+                                pauseLobbyMusic();
+                            }
+                        }
+                        case "MusicStop" -> {
+                            ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
+                            SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
+                            isAllowPlayMusic = false;
+                            stopLobbyMusic();
+                        }
+                    }
+                }
+            });
+        }
+
         if (SteamUtils.getCsgoPath() == null) {
             if (!SteamUtils.initCSGODir()) {
                 isBootFailed = true;

@@ -1,7 +1,8 @@
-package cn.wwl.radio.utils;
+package cn.wwl.radio.file;
 
 import cn.wwl.radio.console.ConsoleManager;
-import cn.wwl.radio.file.ConfigLoader;
+import net.platinumdigitalgroup.jvdf.VDFNode;
+import net.platinumdigitalgroup.jvdf.VDFParser;
 
 import java.io.*;
 import java.util.*;
@@ -11,12 +12,25 @@ public class SteamUtils {
     private static File csgoPath;
 
     public static File getCsgoPath() {
+        if (csgoPath == null) {
+            initCSGODir();
+        }
         return csgoPath;
     }
 
-    public static boolean initCSGODir() {
+    public static synchronized boolean initCSGODir() {
         if (csgoPath != null) {
             return true;
+        }
+        ConfigObject configObject = ConfigLoader.getConfigObject();
+        if (!configObject.getGamePath().equals("NULL")) {
+            csgoPath = new File(configObject.getGamePath());
+            if (!csgoPath.exists()) {
+                ConsoleManager.getConsole().printError("Wrong Exist CSGOLocation!");
+            } else {
+                ConsoleManager.getConsole().printToConsole("Using Exist CSGOLocation: " + csgoPath.getAbsolutePath());
+                return true;
+            }
         }
 
         String csgoLocation = SteamUtils.getFileLocation("csgo.exe").replace("csgo.exe","");
@@ -24,7 +38,10 @@ public class SteamUtils {
             ConsoleManager.getConsole().printError("Get CSGO Path failed!");
             return false;
         }
+
         csgoPath = new File(csgoLocation);
+        configObject.setGamePath(csgoLocation);
+        ConfigLoader.writeConfigObject();
         return true;
     }
 
@@ -57,15 +74,71 @@ public class SteamUtils {
             }
 
             try {
-                patchUserLocalConfig(userConfig);
+                patchLocalConfig(userConfig);
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Try parse User " + file.getName() + " Config Throw Exception!");
                 e.printStackTrace();
             }
         }
+        ConsoleManager.getConsole().printToConsole("Check user Config done.");
     }
 
-    private static void patchUserLocalConfig(File userConfig) throws Exception {
+    /* //Work not well, Have some Format bug. Need fix.
+    private static void patchLocalConfig(File config) throws Exception {
+        String cfgString = ConfigLoader.fileListToString(ConfigLoader.readFile(config));
+        VDFParser parser = new VDFParser();
+        VDFNode root = parser.parse(cfgString);
+        VDFNode steam = root
+                .getSubNode("UserLocalConfigStore")
+                .getSubNode("Software")
+                .getSubNode("Valve")
+                .getSubNode("Steam");
+        VDFNode apps = steam.containsKey("apps") ? steam.getSubNode("apps") : steam.getSubNode("Apps");
+        if (!apps.containsKey("730")) {
+            ConsoleManager.getConsole().printToConsole("UserConfig: " + config.getAbsolutePath() + " Not found CSGO Games!");
+            return;
+        }
+
+        VDFNode csgo = apps.getSubNode("730");
+        if (csgo.containsKey("LaunchOptions")) {
+            String launchOptions = csgo.getString("LaunchOptions");
+            if (!launchOptions.contains("-netconport")) {
+                ConsoleManager.getConsole().printToConsole("Updated UserConfig: " + config.getAbsolutePath() + ", Reason: Added netConPort.");
+                csgo.setValue("LaunchOptions",launchOptions + " -netconport " + ConfigLoader.getConfigObject().getGamePort());
+            } else {
+                if (launchOptions.contains(String.valueOf(ConfigLoader.getConfigObject().getGamePort()))) {
+                    return;
+                }
+
+                ConsoleManager.getConsole().printToConsole("Updated UserConfig: " + config.getAbsolutePath() + ", Reason: Update netConPort.");
+                StringBuilder newLine = new StringBuilder();
+                List<String> split = Arrays.stream(launchOptions.split(" ")).toList();
+                boolean patchNext = false;
+                for (String s : split) {
+                    if (patchNext) {
+                        s = String.valueOf(ConfigLoader.getConfigObject().getGamePort());
+                        patchNext = false;
+                    }
+                    if (s.equals("-netconport")) {
+                        patchNext = true;
+                    }
+                    newLine.append(s).append(" ");
+                }
+                csgo.setValue("LaunchOptions", newLine.toString().trim());
+            }
+        } else {
+            ConsoleManager.getConsole().printToConsole("Updated UserConfig: " + config.getAbsolutePath() + ", Reason: Added LaunchOptions.");
+            csgo.setValue("LaunchOptions","-netconport " + ConfigLoader.getConfigObject().getGamePort());
+        }
+
+        ConfigLoader.writeFile(root.toVDFConfig(), new File(".","DEBUG" + Math.random() + ".txt"), ConfigLoader.getFileCharset(config));
+    }
+*/
+
+    /*
+     * TODO Bad Performance, need fix
+     */
+    private static void patchLocalConfig(File userConfig) throws Exception {
         int startLine = -1;
         int endLine = -1;
         int count = 1;
@@ -241,12 +314,9 @@ public class SteamUtils {
 //            debugFile.createNewFile();
 //            System.out.println("DEBUG: Write file: [" + configFile.getAbsolutePath() + "] is Temp redirected to Write:[" + debugFile + "]");
 //            configFile = debugFile;
-            FileWriter writer = new FileWriter(configFile);
             StringBuilder builder = new StringBuilder();
             configMap.forEach((i,s) -> builder.append(s).append("\r\n"));
-            writer.write(builder.toString().trim());
-            writer.flush();
-            writer.close();
+            ConfigLoader.writeFile(builder.toString().trim(), configFile);
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try write ConfigFile: " + configFile.getAbsolutePath() + " Throw Excpetion!");
             e.printStackTrace();

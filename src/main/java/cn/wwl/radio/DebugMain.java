@@ -2,35 +2,30 @@ package cn.wwl.radio;
 
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.file.ConfigLoader;
-import cn.wwl.radio.music.MusicManager;
-import cn.wwl.radio.music.MusicResult;
-import cn.wwl.radio.music.MusicSource;
-
-import java.io.File;
-import java.util.List;
-import java.util.Scanner;
+import org.apache.commons.text.PatchStringEscapeUtils;
 
 public class DebugMain {
-    public static void main(String[] args) throws Exception {
-        System.out.println("Start debug...");
-        ConsoleManager.initConsole(new String[] {"tray"});
-        ConfigLoader.loadConfigObject(false);
 
-        System.out.print("Enter music name: ");
-        Scanner scanner = new Scanner(System.in).useDelimiter("\n");
-        String next = scanner.next();
-        System.out.println("Searching: " + next);
-        List<MusicResult> musicResults = MusicManager.getMusicSource().searchMusic(next);
-        System.out.println("Result: " + musicResults);
-        System.out.print("Enter which wanna playing: ");
-        MusicResult musicResult = musicResults.get(scanner.nextInt());
-        System.out.println("Selected: " + musicResult);
-        File file = MusicManager.getMusicSource().downloadMusic(musicResult);
-        if (file == MusicSource.NEED_PAY_FILE) {
-            System.out.println("Download Failed! NEED_PAY");
-            return;
+    public static void main(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
+        long endTime = 0L;
+        boolean initConsole = false;
+        System.out.println("Start debug...");
+        if (initConsole) {
+            ConsoleManager.initConsole(new String[] {"tray"});
+            ConfigLoader.loadConfigObject(false);
         }
-        System.out.println("Downloaded to " + file.getAbsolutePath());
-        System.out.println("Debug end.");
+
+        String test = "This is a \"Escape Java Test\", i Will Try Any Random Code in here. Like \\IDK\\ lol{^_^}";
+        System.out.println("Original: " + test);
+        String escape = PatchStringEscapeUtils.escapeJava(test);
+        System.out.println("Escape: " + escape);
+        String unEscape = PatchStringEscapeUtils.unescapeJava(test);
+        System.out.println("UnEscape: " + escape);
+        String escapeUnescape = PatchStringEscapeUtils.unescapeJava(escape);
+        System.out.println("escape Unescape: " + escapeUnescape);
+
+        endTime = System.currentTimeMillis();
+        System.out.println("Debug end.Used time: " + (endTime - startTime) + "ms");
     }
 }

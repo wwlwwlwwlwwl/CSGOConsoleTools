@@ -55,5 +55,9 @@ public class ConfigWatcher implements Runnable {
                 ConsoleManager.getConsole().printToConsole("Reload Failed!");
             }
         }
+
+        try {
+            Thread.sleep(1000);
+        } catch (Exception ignored) {}
     }
 }

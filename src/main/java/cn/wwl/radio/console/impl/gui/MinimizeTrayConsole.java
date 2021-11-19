@@ -161,7 +161,7 @@ public class MinimizeTrayConsole implements GameConsole {
                         CustomMusicFunction.setLobbyMusicGain(value,false);
                     });
 
-                    panel.setLayout(SettingsPanel.VERTICAL_LAYOUT);
+                    panel.setLayout(ManagerPanel.VERTICAL_LAYOUT);
                     panel.setOpaque(true);
                     panel.add(label);
                     panel.add(slider);

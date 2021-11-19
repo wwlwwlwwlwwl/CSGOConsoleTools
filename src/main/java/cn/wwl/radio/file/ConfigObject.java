@@ -13,6 +13,7 @@ public class ConfigObject {
     private String APIToken = "None";
     private String musicSource = "Netease";
     private boolean lobbyMusic = true;
+    private String gamePath = "NULL";
     private List<TextMarker> randomColors = TextMarker.availableColors();
     private Map<String, String> autoReplaceCommand = new HashMap<>();
 
@@ -99,6 +100,15 @@ public class ConfigObject {
 
     public ConfigObject setLobbyMusic(boolean lobbyMusic) {
         this.lobbyMusic = lobbyMusic;
+        return this;
+    }
+
+    public String getGamePath() {
+        return gamePath;
+    }
+
+    public ConfigObject setGamePath(String gamePath) {
+        this.gamePath = gamePath;
         return this;
     }
 

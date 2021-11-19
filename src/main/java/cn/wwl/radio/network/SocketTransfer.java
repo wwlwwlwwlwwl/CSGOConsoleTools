@@ -8,7 +8,7 @@ import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.executor.functions.CustomMusicFunction;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.network.task.ListenerTask;
-import cn.wwl.radio.utils.SteamUtils;
+import cn.wwl.radio.file.SteamUtils;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -18,7 +18,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -135,7 +134,8 @@ public class SocketTransfer {
         try {
             ConsoleManager.getConsole().printToConsole("Start Shutdown now...");
             if (echoShutdown) {
-                echoDisconnect();
+                if (!socket.isClosed())
+                        echoDisconnect();
             }
             executor.shutdown();
             socket.close();

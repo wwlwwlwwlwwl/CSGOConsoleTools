@@ -4,6 +4,8 @@ import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
+import cn.wwl.radio.file.RadioFileManager;
+import cn.wwl.radio.file.SteamUtils;
 import cn.wwl.radio.utils.TimerUtils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -13,11 +15,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static cn.wwl.radio.console.impl.gui.ManagerPanel.*;
 
 public class SettingsPanel {
     private JPanel mainPanel;
@@ -30,20 +32,44 @@ public class SettingsPanel {
     private JLabel tipLabel;
 
     private static JFrame frame = new JFrame("SettingsPanel");
-    private static JList<String> list = new JList<>();
+    private static JList<String> moduleList = new JList<>();
+    private static JList<String> radioList = new JList<>();
     private static boolean installOnce;
 
     private static List<Field> strClass = new ArrayList<>();
     private static List<Field> intClass = new ArrayList<>();
     private static List<Field> boolClass = new ArrayList<>();
 
-    public static final VerticalFlowLayout VERTICAL_LAYOUT = new VerticalFlowLayout(VerticalFlowLayout.TOP, 15, 15, true);
-    public static final FlowLayout DEFAULT_LAYOUT = new FlowLayout(FlowLayout.LEFT, 15, 15);
-
     private static JPanel CONFIG_PANEL = new JPanel();
     private static JPanel MODULE_PANEL = new JPanel();
+    private static JPanel RADIO_PANEL = new JPanel();
 
     private static JPanel MODULE_DETAIL_PANEL = new JPanel();
+    private static JPanel RADIO_DETAIL_PANEL = new JPanel();
+
+    public static final List<String> DEFAULT_RADIO = List.of(
+            "roger",
+            "negative",
+            "cheer",
+            "holdpos",
+            "followme",
+            "thanks",
+            "go",
+            "fallback",
+            "sticktog",
+            "holdpos",
+            "followme",
+            "compliment",
+            "thanks",
+            "enemyspot",
+            "needbackup",
+            "takepoint",
+            "sectorclear",
+            "inposition",
+            "needrop",
+            "go_a",
+            "go_b"
+    );
 
     public SettingsPanel(ManagerPanel parent) {
         frame.addWindowListener(new WindowAdapter() {
@@ -87,10 +113,10 @@ public class SettingsPanel {
     }
 
     private void initAllPanel() {
-        DEFAULT_LAYOUT.setAlignOnBaseline(true);
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         model.addElement("Config");
         model.addElement("Modules");
+        model.addElement("Radio");
         typeBox.setModel(model);
 
         CONFIG_PANEL.setEnabled(true);
@@ -115,22 +141,45 @@ public class SettingsPanel {
         MODULE_DETAIL_PANEL.setVisible(true);
         MODULE_DETAIL_PANEL.setLayout(VERTICAL_LAYOUT);
         MODULE_PANEL.add(MODULE_DETAIL_PANEL, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+
+        RADIO_PANEL.setEnabled(true);
+        RADIO_PANEL.setFocusCycleRoot(false);
+        RADIO_PANEL.setInheritsPopupMenu(false);
+        RADIO_PANEL.setVisible(false);
+        RADIO_PANEL.setLayout(DEFAULT_LAYOUT);
+        mainPanel.add(RADIO_PANEL, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        initRadioSelectionPanel();
+
+        RADIO_DETAIL_PANEL.setEnabled(true);
+        RADIO_DETAIL_PANEL.setFocusCycleRoot(false);
+        RADIO_DETAIL_PANEL.setInheritsPopupMenu(false);
+        RADIO_DETAIL_PANEL.setVisible(true);
+        RADIO_DETAIL_PANEL.setLayout(VERTICAL_LAYOUT);
+        RADIO_PANEL.add(RADIO_DETAIL_PANEL, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     }
 
     public void displayNotification(String s) {
         String text = notificationText.getText();
         notificationText.setText(s);
-        TimerUtils.callMeLater(1500, new TimerTask() {
-            @Override
-            public void run() {
-                notificationText.setText(text);
-            }
-        });
+        TimerUtils.callMeLater(1500, () -> notificationText.setText(text));
+    }
+
+    public void notificationSave() {
+        saveButton.setBackground(NOTIFICATION_COLOR);
+        TimerUtils.callMeLater(500, () -> saveButton.setBackground(BACKGROUND_COLOR));
+        TimerUtils.callMeLater(1000, () -> saveButton.setBackground(NOTIFICATION_COLOR));
+        TimerUtils.callMeLater(1500, () -> saveButton.setBackground(BACKGROUND_COLOR));
+        TimerUtils.callMeLater(2000, () -> saveButton.setBackground(NOTIFICATION_COLOR));
+        TimerUtils.callMeLater(2500, () -> saveButton.setBackground(BACKGROUND_COLOR));
     }
 
     private void saveConfig(boolean disableSaveButton) {
         ConsoleManager.getConsole().printToConsole("Save user Config in Settings Menu.");
-        ConfigLoader.writeConfigObject();
+        String selectedItem = (String) typeBox.getSelectedItem();
+        switch (selectedItem) {
+            case "Config" -> ConfigLoader.writeConfigObject();
+            case "Radio" -> RadioFileManager.getInstance().saveRadioConfig();
+        }
         notificationText.setText("Config Saved.");
         if (disableSaveButton) {
             saveButton.setText("Saved!!!");
@@ -148,8 +197,6 @@ public class SettingsPanel {
                 notificationText.setText("Ready.");
             }
         });
-
-        updateListData();
     }
 
     public JFrame getFrame() {
@@ -160,11 +207,205 @@ public class SettingsPanel {
         fieldPanel.setVisible(false);
         CONFIG_PANEL.setVisible(false);
         MODULE_PANEL.setVisible(false);
+        RADIO_PANEL.setVisible(false);
 
         switch (val) {
             case "Modules" -> MODULE_PANEL.setVisible(true);
             case "Config" -> CONFIG_PANEL.setVisible(true);
+            case "Radio" -> {
+                if (RADIO_PANEL.getComponentCount() == 1) {
+                    JOptionPane.showMessageDialog(frame, "Radio Manager Require Locate the Game to Continue.\nPlease Start Game and Reopen Application Again.");
+                }
+                RADIO_PANEL.setVisible(true);
+            }
         }
+    }
+
+    private void initRadioSelectionPanel() {
+//        JList<String> list = new JList<>();
+//        DefaultListModel<String> model = new DefaultListModel<>();
+//        ConfigLoader.getConfigObject().getModuleList().forEach(m -> {
+//            if (m.getFunction().equals("CustomRadio")) {
+//                model.addElement(m.getName());
+//            }
+//        });
+//        list.setModel(model);
+        if (SteamUtils.getCsgoPath() == null) {
+            return;
+        }
+
+        JPanel btnPanel = new JPanel();
+        JComboBox<String> groupSelect = new JComboBox<>();
+
+        btnPanel.setEnabled(true);
+        btnPanel.setFocusCycleRoot(false);
+        btnPanel.setInheritsPopupMenu(false);
+        btnPanel.setVisible(true);
+        btnPanel.setLayout(ManagerPanel.VERTICAL_LAYOUT);
+        setSkin(btnPanel);
+
+        Dimension size = new Dimension(150, 400);
+        updateRadioListData(RadioFileManager.RadioGroup.COMMON);
+
+        radioList.setForeground(ManagerPanel.NOTIFICATION_COLOR);
+        radioList.setBackground(ManagerPanel.FOREGROUND_COLOR);
+        radioList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selectedValue = radioList.getSelectedValue();
+                String selectedItem = (String) groupSelect.getSelectedItem();
+                if (selectedValue == null) {
+                    return;
+                }
+                renderRadioData(RadioFileManager.getInstance().getRadioObjectByName(RadioFileManager.RadioGroup.getByName(selectedItem), selectedValue));
+            }
+        });
+        JScrollPane scrollPane = new JScrollPane(radioList);
+        scrollPane.setForeground(ManagerPanel.CONSOLE_MESSAGE_COLOR);
+        scrollPane.setBackground(ManagerPanel.CONSOLE_MESSAGE_COLOR);
+        scrollPane.setPreferredSize(size);
+        scrollPane.setVisible(true);
+        btnPanel.add(scrollPane);
+        JButton addButton = new JButton();
+        JButton delButton = new JButton();
+        setSkin(addButton);
+        setSkin(delButton);
+        setSkin(groupSelect);
+        groupSelect.setModel(new DefaultComboBoxModel<>() {{
+            for (RadioFileManager.RadioGroup value : RadioFileManager.RadioGroup.values()) {
+                addElement(value.getGroupName());
+            }
+        }});
+
+        groupSelect.addItemListener(e -> {
+            Object item = e.getItem();
+            if (item instanceof String selectedValue) {
+                updateRadioListData(RadioFileManager.RadioGroup.getByName(selectedValue));
+            }
+        });
+        addButton.setText("Add Radio");
+        delButton.setText("Remove Radio");
+        addButton.addActionListener(e -> {
+            RadioFileManager.RadioGroup group = RadioFileManager.RadioGroup.getByName((String) groupSelect.getSelectedItem());
+            Map<String, RadioFileManager.RadioObject> groupList = RadioFileManager.getInstance().getObjectsByGroup(group);
+            if (groupList.size() >= 9) {
+                displayNotification("Radio Count Must Less than 9!");
+                return;
+            }
+
+            String randomName = "NEW RADIO-" + new Random().nextInt(100000);
+            RadioFileManager.RadioObject object = new RadioFileManager.RadioObject();
+            object.setCmd("roger").setHotkey(String.valueOf(groupList.size() + 1)).setLabel(randomName);
+            RadioFileManager.getInstance().putRadioCommand(group, "Radio0" + (groupList.size() + 1), object);
+            updateRadioListData(group);
+        });
+
+        delButton.addActionListener(e -> {
+            String selectedItem = radioList.getSelectedValue();
+            if (selectedItem == null) {
+                return;
+            }
+            RadioFileManager.RadioGroup group = RadioFileManager.RadioGroup.getByName((String) groupSelect.getSelectedItem());
+//            System.out.println("Group: " + group + ", Name: " + selectedItem);
+            RadioFileManager.RadioObject radioObject = RadioFileManager.getInstance().getRadioObjectByName(group, selectedItem);
+//            System.out.println("Delete Object: " + radioObject);
+            RadioFileManager.getInstance().removeObject(radioObject);
+            updateRadioListData(group);
+        });
+
+        btnPanel.add(groupSelect);
+        btnPanel.add(addButton);
+        btnPanel.add(delButton);
+        RADIO_PANEL.add(btnPanel);
+//        RADIO_PANEL.add(btnPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+    }
+
+    private void updateRadioListData(RadioFileManager.RadioGroup group) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        Map<String, RadioFileManager.RadioObject> map = RadioFileManager.getInstance().getObjectsByGroup(group);
+        map.forEach((s, o) -> model.addElement(s));
+
+        radioList.setModel(model);
+        radioList.repaint();
+    }
+
+    private void renderRadioData(RadioFileManager.RadioObject radioObject) {
+        RADIO_DETAIL_PANEL.removeAll();
+        RADIO_DETAIL_PANEL.repaint();
+
+        JLabel keyLabel = new JLabel();
+        JLabel titleLabel = new JLabel();
+        JLabel cmdLabel = new JLabel();
+        JTextField labelField = new JTextField();
+        JComboBox<String> cmdField = new JComboBox<>();
+        Dimension dimension = new Dimension(150, 30);
+
+        setSkin(keyLabel);
+        setSkin(titleLabel);
+        setSkin(cmdLabel);
+        setSkin(labelField);
+        setSkin(cmdField);
+
+        keyLabel.setPreferredSize(dimension);
+        keyLabel.setMinimumSize(dimension);
+        titleLabel.setPreferredSize(dimension);
+        titleLabel.setMinimumSize(dimension);
+        cmdLabel.setPreferredSize(dimension);
+        cmdLabel.setMinimumSize(dimension);
+        labelField.setPreferredSize(dimension);
+        labelField.setMinimumSize(dimension);
+        cmdField.setPreferredSize(dimension);
+        cmdField.setMinimumSize(dimension);
+
+        keyLabel.setText("HotKey: " + radioObject.getHotkey());
+        titleLabel.setText("Label: ");
+        cmdLabel.setText("cmd: ");
+        labelField.setText(radioObject.getLabel());
+        cmdField.setModel(getCMDComboBoxModel());
+        String cmd = radioObject.getCmd();
+        String moduleName = RadioFileManager.getInstance().getModuleNameByAlias(cmd);
+        if (moduleName != null) {
+            cmd = moduleName;
+        }
+        cmdField.setSelectedItem(cmd);
+
+        cmdField.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String item = (String) e.getItem();
+//                System.out.println("Item: " + item);
+                String aliasName = RadioFileManager.getInstance().getAliasByModuleName(item);
+//                System.out.println("Alias: " + aliasName);
+                if (aliasName != null) {
+                    radioObject.setCmd(aliasName);
+                    RadioFileManager.getInstance().updateObject(radioObject);
+                } else {
+                    radioObject.setCmd(item);
+                    RadioFileManager.getInstance().updateObject(radioObject);
+                }
+            }
+        });
+
+        labelField.addActionListener(e -> {
+            System.out.println("title Change to " + labelField.getText());
+        });
+        RADIO_DETAIL_PANEL.add(keyLabel);
+        RADIO_DETAIL_PANEL.add(titleLabel);
+        RADIO_DETAIL_PANEL.add(labelField);
+        RADIO_DETAIL_PANEL.add(cmdLabel);
+        RADIO_DETAIL_PANEL.add(cmdField);
+
+        RADIO_DETAIL_PANEL.revalidate();
+    }
+
+    private ComboBoxModel<String> getCMDComboBoxModel() {
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        for (ConfigObject.ModuleObject moduleObject : ConfigLoader.getConfigObject().getModuleList()) {
+            if (moduleObject.getFunction().equals("CustomRadio")) {
+                model.addElement(moduleObject.getName());
+            }
+        }
+
+        DEFAULT_RADIO.forEach(model::addElement);
+        return model;
     }
 
     private void initModulesConfig() {
@@ -173,23 +414,23 @@ public class SettingsPanel {
         btnPanel.setFocusCycleRoot(false);
         btnPanel.setInheritsPopupMenu(false);
         btnPanel.setVisible(true);
-        btnPanel.setLayout(VERTICAL_LAYOUT);
+        btnPanel.setLayout(ManagerPanel.VERTICAL_LAYOUT);
         setSkin(btnPanel);
         MODULE_PANEL.add(btnPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
 
-        list.setForeground(ManagerPanel.NOTIFICATION_COLOR);
-        list.setBackground(ManagerPanel.FOREGROUND_COLOR);
+        moduleList.setForeground(ManagerPanel.NOTIFICATION_COLOR);
+        moduleList.setBackground(ManagerPanel.FOREGROUND_COLOR);
         Dimension size = new Dimension(150, 400);
 //        list.setPreferredSize(size);
-        updateListData();
+        updateModuleListData();
 
-        list.addListSelectionListener(e -> {
+        moduleList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                String selectedValue = list.getSelectedValue();
+                String selectedValue = moduleList.getSelectedValue();
                 renderModuleData(selectedValue);
             }
         });
-        JScrollPane scrollPane = new JScrollPane(list);
+        JScrollPane scrollPane = new JScrollPane(moduleList);
         scrollPane.setForeground(ManagerPanel.CONSOLE_MESSAGE_COLOR);
         scrollPane.setBackground(ManagerPanel.CONSOLE_MESSAGE_COLOR);
         scrollPane.setPreferredSize(size);
@@ -204,11 +445,11 @@ public class SettingsPanel {
             ConfigObject.ModuleObject moduleObject = ConfigObject.ModuleObject.create();
             ConfigLoader.getConfigObject().getModuleList().add(moduleObject);
             displayNotification("Created New module.");
-            updateListData();
+            updateModuleListData();
         });
 
         delButton.addActionListener(e -> {
-            String selectedValue = list.getSelectedValue();
+            String selectedValue = moduleList.getSelectedValue();
             ConfigObject.ModuleObject module = findModule(selectedValue);
             ConfigLoader.getConfigObject().getModuleList().remove(module);
             displayNotification("Module " + module.getName() + " Deleted.");
@@ -221,15 +462,15 @@ public class SettingsPanel {
         btnPanel.add(delButton);
     }
 
-    private void updateListData() {
+    private void updateModuleListData() {
         ConfigObject configObject = ConfigLoader.getConfigObject();
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (int i = 0; i < configObject.getModuleList().size(); i++) {
             listModel.add(i, configObject.getModuleList().get(i).getName());
         }
 
-        list.setModel(listModel);
-        list.repaint();
+        moduleList.setModel(listModel);
+        moduleList.repaint();
     }
 
     private ConfigObject.ModuleObject findModule(String name) {
@@ -344,7 +585,11 @@ public class SettingsPanel {
         JLabel plabel = new JLabel();
         plabel.setHorizontalAlignment(SwingConstants.LEFT);
         plabel.setVerticalAlignment(SwingConstants.TOP);
-        plabel.setText("Parameter: " + (p.get().length() == 0 ? "None" : p));
+        plabel.setText("Parameter: " + (
+                p.get().length() == 0 ?
+                        "None" :
+                        (p.get().length() > 50 ? p.get().substring(0, 50) + "..." : p)
+        ));
         setSkin(plabel);
         panel.add(plabel);
 
@@ -357,6 +602,63 @@ public class SettingsPanel {
         parameterSettingButton.setVisible(true);
         parameterSettingButton.setText("Edit Parameter");
         parameterSettingButton.addActionListener(e -> {
+            if (moduleObject.getFunction().equals("CustomRadio")) {
+                RadioPreviewPanel previewPanel = RadioPreviewPanel.getInstance();
+                frame.setEnabled(false);
+                List<String> parameter = moduleObject.getParameter();
+                StringBuilder result = new StringBuilder("");
+                if (parameter.size() == 1) {
+                    result.append(parameter.get(0));
+                } else if (parameter.size() > 1) {
+                    for (int i = 0; i < parameter.size(); i++) {
+                        String str = parameter.get(i);
+                        if (i != 0) {
+                            result.append(str).append(";");
+                        }
+                    }
+                    String substring = result.substring(0, result.length() - 1);
+                    result = new StringBuilder(substring);
+                }
+
+                previewPanel.configureRadio(result.toString(), (str) -> {
+                    frame.setEnabled(true);
+                    if (str == null) {
+                        return;
+                    }
+                    List<String> list = new ArrayList<>();
+                    if (!str.contains(";")) {
+                        switch (parameter.size()) {
+                            case 0, 1 -> list.add(str);
+                            default -> {
+                                list.add(parameter.get(0));
+                                list.add(str);
+                            }
+                        }
+                    } else {
+                        String[] split = str.split(";");
+                        switch (parameter.size()) {
+                            case 0, 1 -> list.addAll(Arrays.asList(split));
+                            default -> {
+                                list.add(parameter.get(0));
+                                list.addAll(Arrays.asList(split));
+                            }
+                        }
+                    }
+
+                    moduleObject.setParameter(list);
+                    System.out.println("Parameter: " + parameter);
+                    p.set(generationStringParameter(moduleObject));
+                    plabel.setText("Parameter: " + (
+                            p.get().length() == 0 ?
+                                    "None" :
+                                    (p.get().length() > 50 ? p.get().substring(0, 50) + "..." : p)
+                    ));
+                    displayNotification("Module Parameter Updated.");
+                    notificationSave();
+                });
+                return;
+            }
+
             String str = (String) JOptionPane.showInputDialog(null, "Enter the Parameter Here, Use [;] To split lines.", "Parameter Setting", JOptionPane.PLAIN_MESSAGE, null, null, p);
             if (str == null) {
                 displayNotification("Canceled.");
@@ -369,7 +671,12 @@ public class SettingsPanel {
                     moduleObject.setParameter(List.of(str));
                 }
                 p.set(generationStringParameter(moduleObject));
-                plabel.setText("Parameter: " + (p.get().length() == 0 ? "None" : p));
+                plabel.setText("Parameter: " + (
+                        p.get().length() == 0 ?
+                                "None" :
+                                (p.get().length() > 50 ? p.get().substring(0, 50) + "..." : p)
+                ));
+                notificationSave();
 //                plabel.repaint();
             }
         });
@@ -448,7 +755,7 @@ public class SettingsPanel {
                         String text = textField.getText();
                         try {
                             f.set(configObject, text);
-                            updateListData();
+                            updateModuleListData();
                         } catch (Exception ex) {
                             ConsoleManager.getConsole().printError("Try set " + f.getName() + " Value to [" + text + "] failed!");
                             ex.printStackTrace();
@@ -518,17 +825,6 @@ public class SettingsPanel {
             }
         }
         return result.toString();
-    }
-
-    private void setSkin(JComponent component) {
-        try {
-            component.setBackground(ManagerPanel.BACKGROUND_COLOR);
-        } catch (Exception ignored) {
-        }
-        try {
-            component.setForeground(ManagerPanel.FOREGROUND_COLOR);
-        } catch (Exception ignored) {
-        }
     }
 
     private void initCustomStyle() {

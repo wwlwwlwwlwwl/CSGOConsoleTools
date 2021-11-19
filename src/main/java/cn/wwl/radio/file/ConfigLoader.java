@@ -1,9 +1,11 @@
 package cn.wwl.radio.file;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
 import cn.wwl.radio.executor.FunctionExecutor;
 import com.google.gson.*;
 
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
@@ -141,7 +143,18 @@ public class ConfigLoader {
             configObject = object;
             writeObject(true);
             ConsoleManager.getConsole().printToConsole("Config file updated! Please check the config file!");
-            System.exit(0);
+            if (ConsoleManager.getConsole() instanceof MinimizeTrayConsole) {
+                int i = JOptionPane.showConfirmDialog(null,
+                        "Game Config Updated. Please Check the Config File.\nClick Any button to Close Application.",
+                        "Config updated!",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE);
+                if (i > -100) { //随意进行一个计算 反正就是等待用户点任何按键
+                    System.exit(0);
+                }
+            } else {
+                System.exit(0);
+            }
         }
     }
 
@@ -150,14 +163,54 @@ public class ConfigLoader {
             ConfigWatcher.cancelOnce();
             String data = writeCache ? GSON.toJson(configObject) : GSON.toJson(new ConfigObject());
 //            System.out.println("DEBUG: [" + data + "]");
-            FileWriter writer = new FileWriter(CONFIG_FILE, CONFIG_CHARSET);
-            writer.write(data);
-            writer.flush();
-            writer.close();
+            writeFile(data, CONFIG_FILE, CONFIG_CHARSET);
             ConsoleManager.getConsole().printToConsole("Config file saved.");
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try write config but throw Exception!");
             e.printStackTrace();
         }
+    }
+
+    public static String fileListToString(List<String> readData) {
+        StringBuilder builder = new StringBuilder();
+        readData.forEach(s -> builder.append(s).append("\r\n"));
+        return builder.toString().trim();
+    }
+
+    public static List<String> readFile(File file) {
+        if (file == null || !file.exists() || file.length() == 0) {
+            return List.of();
+        }
+        try {
+            List<String> strList = new ArrayList<>();
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            reader.lines().forEach(strList::add);
+            reader.close();
+            return strList;
+        } catch (Exception e) {
+            ConsoleManager.getConsole().printError("Try read File throw Exception!");
+            e.printStackTrace();
+        }
+        return List.of();
+    }
+
+    public static void writeFile(String data,File file) throws IOException {
+        writeFile(data,file,Charset.defaultCharset());
+    }
+
+    public static void writeFile(String data,File file,Charset charset) throws IOException {
+        if (charset == null) {
+            return;
+        }
+        if (!file.exists()) {
+            if (!file.createNewFile()) {
+                ConsoleManager.getConsole().printError("Try create file: " + file.getName() + " Failed!");
+            }
+        }
+
+        FileWriter writer = new FileWriter(file,charset);
+        writer.write(data);
+        writer.flush();
+        writer.close();
     }
 }

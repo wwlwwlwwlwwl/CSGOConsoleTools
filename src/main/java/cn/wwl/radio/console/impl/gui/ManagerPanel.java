@@ -53,6 +53,10 @@ public class ManagerPanel {
     public static final Color FOREGROUND_COLOR = new Color(160, 167, 180);
     public static final Color ACTIVATE_COLOR = new Color(104, 217, 255);
     public static final Color NOTIFICATION_COLOR = new Color(52, 89, 153);
+    public static final Color CAROT_COLOR = new Color(0, 191, 255, 200);
+
+    public static final VerticalFlowLayout VERTICAL_LAYOUT = new VerticalFlowLayout(VerticalFlowLayout.TOP, 15, 15, true);
+    public static final FlowLayout DEFAULT_LAYOUT = new FlowLayout(FlowLayout.LEFT, 15, 15);
 
     private JButton activateButton;
     private static ManagerPanel instance;
@@ -104,6 +108,7 @@ public class ManagerPanel {
         BUTTONS = List.of(normalInput, errorInput, consoleInput);
         activateButton = normalInput;
         activateButton.setEnabled(false);
+        DEFAULT_LAYOUT.setAlignOnBaseline(true);
         initCustomStyle();
         updateTextarea();
         scrollPane.setAutoscrolls(true);
@@ -180,29 +185,32 @@ public class ManagerPanel {
     }
 
     private void initCustomStyle() {
-        normalInput.setBackground(BACKGROUND_COLOR);
-        errorInput.setBackground(BACKGROUND_COLOR);
-        consoleInput.setBackground(BACKGROUND_COLOR);
-        ButtonPanel.setBackground(BACKGROUND_COLOR);
-        InputPanel.setBackground(BACKGROUND_COLOR);
-        inputBox.setBackground(BACKGROUND_COLOR);
-        submitButton.setBackground(BACKGROUND_COLOR);
-        consolePane.setBackground(BACKGROUND_COLOR);
-        mainPanel.setBackground(BACKGROUND_COLOR);
-        settingButton.setBackground(BACKGROUND_COLOR);
-        scrollPane.setBackground(BACKGROUND_COLOR);
+        setSkin(normalInput);
+        setSkin(errorInput);
+        setSkin(consoleInput);
+        setSkin(ButtonPanel);
+        setSkin(InputPanel);
+        setSkin(inputBox);
+        setSkin(submitButton);
+        setSkin(consolePane);
+        setSkin(mainPanel);
+        setSkin(settingButton);
+        setSkin(scrollPane);
+    }
 
-        normalInput.setForeground(FOREGROUND_COLOR);
-        errorInput.setForeground(FOREGROUND_COLOR);
-        consoleInput.setForeground(FOREGROUND_COLOR);
-        ButtonPanel.setForeground(FOREGROUND_COLOR);
-        InputPanel.setForeground(FOREGROUND_COLOR);
-        inputBox.setForeground(FOREGROUND_COLOR);
-        submitButton.setForeground(FOREGROUND_COLOR);
-        consolePane.setForeground(FOREGROUND_COLOR);
-        mainPanel.setForeground(FOREGROUND_COLOR);
-        settingButton.setForeground(FOREGROUND_COLOR);
-        scrollPane.setForeground(FOREGROUND_COLOR);
+    public static void setSkin(JComponent component) {
+        try {
+            component.setBackground(ManagerPanel.BACKGROUND_COLOR);
+        } catch (Exception ignored) {
+        }
+        try {
+            component.setForeground(ManagerPanel.FOREGROUND_COLOR);
+        } catch (Exception ignored) {
+        }
+
+        if (component instanceof JTextComponent) {
+            ((JTextComponent) component).setCaretColor(CAROT_COLOR);
+        }
     }
 
     private void textSubmit() {
@@ -256,6 +264,12 @@ public class ManagerPanel {
     }
 
     private void updateText(String s) {
+        LISTS.forEach(list -> {
+            if (list.size() >= 1000) {
+                list.clear();
+                System.gc();
+            }
+        });
         StyledDocument styledDocument = consolePane.getStyledDocument();
         try {
             styledDocument.insertString(styledDocument.getLength(), s + "\n", prevAttribute);

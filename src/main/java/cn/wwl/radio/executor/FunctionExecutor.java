@@ -1,18 +1,18 @@
 package cn.wwl.radio.executor;
 
+import cn.wwl.radio.file.RadioFileManager;
 import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.functions.*;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
-import cn.wwl.radio.utils.SteamUtils;
+import cn.wwl.radio.file.SteamUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FunctionExecutor {
 
@@ -99,6 +99,7 @@ public class FunctionExecutor {
         }
 
         SteamUtils.initCSGODir();
+        RadioFileManager.getInstance();
     }
 
     private static void registerMessageHook() {
@@ -107,21 +108,22 @@ public class FunctionExecutor {
         }
         isRegistered = true;
 
+        Map<String, ConsoleFunction> messageHookMap = new HashMap<>();
+        functions.forEach((s,func) -> {
+            List<String> specialMessage = func.isHookSpecialMessage();
+            if (!specialMessage.isEmpty()) {
+                specialMessage.forEach(str -> messageHookMap.put(str,func));
+            }
+        });
+
         //Special message Hook
         SocketTransfer.getInstance().addListenerTask("SpecialMessageHook", message -> {
-                for (Map.Entry<String, ConsoleFunction> entry : functions.entrySet()) {
-                    ConsoleFunction function = entry.getValue();
-                    if (function.isHookSpecialMessage().isEmpty()) {
-                        continue;
-                    }
-
-                    for (String s : function.isHookSpecialMessage()) {
-                        if (message.contains(s)) {
-                            FunctionExecutor.executeMessageHook(function,message);
-                            break;
-                        }
-                    }
+            for (Map.Entry<String, ConsoleFunction> entry : messageHookMap.entrySet()) {
+                if (message.contains(entry.getKey())) {
+                    FunctionExecutor.executeMessageHook(entry.getValue() ,message);
+                    break;
                 }
+            }
         });
 
         //Function Hook

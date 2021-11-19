@@ -1,7 +1,7 @@
 package cn.wwl.radio.music;
 
 import cn.wwl.radio.console.ConsoleManager;
-import cn.wwl.radio.utils.SoxSoundUtils;
+import cn.wwl.radio.file.SoxSoundUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jsoup.Connection;
