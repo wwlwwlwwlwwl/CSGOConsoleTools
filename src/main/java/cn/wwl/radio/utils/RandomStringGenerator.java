@@ -1,6 +1,5 @@
 package cn.wwl.radio.utils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class RandomStringGenerator {

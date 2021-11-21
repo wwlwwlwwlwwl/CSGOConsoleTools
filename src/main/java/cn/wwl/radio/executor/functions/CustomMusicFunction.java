@@ -1,16 +1,16 @@
 package cn.wwl.radio.executor.functions;
 
-import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
-import cn.wwl.radio.music.MusicManager;
-import cn.wwl.radio.music.MusicResult;
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
 import cn.wwl.radio.executor.ConsoleFunction;
 import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
-import cn.wwl.radio.music.MusicSource;
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.file.SoxSoundUtils;
 import cn.wwl.radio.file.SteamUtils;
+import cn.wwl.radio.music.MusicManager;
+import cn.wwl.radio.music.MusicResult;
+import cn.wwl.radio.music.MusicSource;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TextMarker;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.advanced.PausablePlayer;
@@ -20,7 +20,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 
 public class CustomMusicFunction implements ConsoleFunction {
 
@@ -74,10 +77,6 @@ public class CustomMusicFunction implements ConsoleFunction {
         if (enableLobbyMusic) {
             playLobbyMusic();
         }
-
-//        if (isBootFailed) {
-//            return;
-//        }
     }
 
     @Override
@@ -234,10 +233,12 @@ public class CustomMusicFunction implements ConsoleFunction {
             SoxSoundUtils.cacheMusic(downloadMusic,temp_list);
             while (temp_list.isEmpty()) {
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(200);
                 } catch (Exception ignored) {}
             }
             ConsoleManager.getConsole().printToConsole("Music " + downloadMusic.getName() + " Ready.");
+            if (isPlaying)
+                isPlaying = false;
             playMusic(temp_list.get(0));
         } else if (content.equals(STOP_COMMAND)) {
             if (isPlaying) {
@@ -309,7 +310,7 @@ public class CustomMusicFunction implements ConsoleFunction {
             ConsoleManager.getConsole().printToConsole("Now playing Music: " + music.getName());
             MinimizeTrayConsole.updatePopupMenu();
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -443,7 +444,7 @@ public class CustomMusicFunction implements ConsoleFunction {
             Files.copy(cachedMusic.toPath(), inputFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try copy File Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
 
         SocketTransfer.getInstance().pushToConsole(
@@ -521,7 +522,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                     } catch (Exception e) {
 //                    ConsoleManager.getConsole().printError("Try parse Volume value: [" + str + "] Throw exception!");
 //                    e.printStackTrace();
-                        SocketTransfer.getInstance().echoToConsole("Wrong Music command. Do you mean music[(+/-)Volume]?");
+                    SocketTransfer.getInstance().echoToConsole("Wrong Music command. Do you mean music[(+/-)Volume]?");
                     }
                 }
 

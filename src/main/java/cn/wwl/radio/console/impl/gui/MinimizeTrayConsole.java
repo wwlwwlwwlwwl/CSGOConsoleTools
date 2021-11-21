@@ -29,15 +29,13 @@ public class MinimizeTrayConsole implements GameConsole {
             IMAGE //Current default is 256x256
     );
     private static TrayIcon trayIcon;
-    private ManagerPanel panel = new ManagerPanel();
+    private final ManagerPanel panel = new ManagerPanel();
 
     @Override
     public void init() {
-        Dimension trayIconSize = SystemTray.getSystemTray().getTrayIconSize();
-        trayIcon = new TrayIcon(IMAGE.getScaledInstance((int) trayIconSize.getWidth(), (int) trayIconSize.getHeight(), Image.SCALE_SMOOTH));
         ManagerPanel.initManagerPanel();
 //        ManagerPanel.showManagerPanel();
-        startTray(true);
+        startTray();
     }
 
     @Override
@@ -47,6 +45,7 @@ public class MinimizeTrayConsole implements GameConsole {
 
     @Override
     public void printError(String data) {
+        System.err.println(data);
         panel.addErrorMessage(data);
     }
 
@@ -59,30 +58,33 @@ public class MinimizeTrayConsole implements GameConsole {
     public void startConsole() {
     }
 
-    private void startTray(boolean showHello) {
+    @Override
+    public void printException(Exception e) {
+        printError(e.toString());
+        for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+            printError("\t" + stackTraceElement);
+        }
+    }
+
+    private void startTray() {
         try {
             if (!SystemTray.isSupported()) {
                 ConsoleManager.getConsole().printError("System Tray is not Supported!");
                 return;
             }
             SystemTray tray = SystemTray.getSystemTray();
+            Dimension trayIconSize = tray.getTrayIconSize();
+            trayIcon = new TrayIcon(IMAGE.getScaledInstance((int) trayIconSize.getWidth(), (int) trayIconSize.getHeight(), Image.SCALE_SMOOTH));
             tray.add(trayIcon);
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try added System Tray throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
 
         trayIcon.setToolTip("CSGOConsoleTools Tray");
         trayIcon.addActionListener(e -> {
-            StringBuilder builder = new StringBuilder("DEBUG: ")
-                    .append("Source: ").append(e.getSource())
-                    .append(", When: ").append(e.getWhen())
-                    .append(", Modifiers: ").append(e.getModifiers())
-                    .append(", ID: ").append(e.getID())
-                    .append(", ActionCommand: ").append(e.getActionCommand());
-//            System.out.println(builder);
             if (e.getModifiers() == 0 && trayIcon.getActionListeners().length == 1) {
-                //只有他自己一个监听器的时候才执行展示托盘的时间 否则由其他的监听器来执行
+                //只有这一个监听器的时候才会双击显示主界面 否则由其他的监听器来执行
                 if (!ManagerPanel.isShowing()) {
                     ManagerPanel.showManagerPanel();
                 }
@@ -93,9 +95,7 @@ public class MinimizeTrayConsole implements GameConsole {
 
         updatePopupMenu(trayIcon);
 
-        if (showHello) {
-            createTrayMessage("CSGOConsoleTools is Started at Tray Mode!\nClick the Tray to Show the GUI!");
-        }
+        createTrayMessage("CSGOConsoleTools is Started at Tray Mode!\nClick the Tray to Show the GUI!");
     }
 
     public static void updatePopupMenu() {
@@ -168,16 +168,6 @@ public class MinimizeTrayConsole implements GameConsole {
                     musicFrame.add(panel);
                     musicFrame.setVisible(true);
                 }));
-
-//                menu.add(createItem("Increase Volume",e -> {
-//                    float lobbyMusicGain = CustomMusicFunction.getLobbyMusicGain();
-//                    CustomMusicFunction.setLobbyMusicGain(lobbyMusicGain + 5.0F);
-//                }));
-//
-//                menu.add(createItem("Decrease Volume",e -> {
-//                    float lobbyMusicGain = CustomMusicFunction.getLobbyMusicGain();
-//                    CustomMusicFunction.setLobbyMusicGain(lobbyMusicGain - 5.0F);
-//                }));
             }
         }
         menu.addSeparator();
@@ -192,7 +182,12 @@ public class MinimizeTrayConsole implements GameConsole {
         menu.add(createItem("Exit", e -> SocketTransfer.getInstance().shutdown(true)));
 
 //        menu.add(createItem("Debug", e -> {
-//            trayIcon.displayMessage("Caption","Debug Text Debug", TrayIcon.MessageType.ERROR);
+//            createTrayMessage("Caption", "Debug Text Debug", TrayIcon.MessageType.ERROR, (type) -> {
+//                switch (type) {
+//                    case TrayMessageCallback.SINGLE_CLICK -> System.out.println("SingleClick");
+//                    case TrayMessageCallback.DOUBLE_CLICK -> System.out.println("DoubleClick");
+//                }
+//            });
 //        }));
         trayIcon.setPopupMenu(menu);
     }
@@ -236,8 +231,8 @@ public class MinimizeTrayConsole implements GameConsole {
         if (callback != null) {
             ActionListener listener = e -> {
                 switch (e.getModifiers()) {
-                    case 0 -> callback.clickMessage();
-                    case 1024 -> callback.doubleClickMessage();
+                    case 0 -> callback.clickMessage(TrayMessageCallback.SINGLE_CLICK);
+                    case 1024 -> callback.clickMessage(TrayMessageCallback.DOUBLE_CLICK);
                 }
                 removeTrayTask(callback);
             };

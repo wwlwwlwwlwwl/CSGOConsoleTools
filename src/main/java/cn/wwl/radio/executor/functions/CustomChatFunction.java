@@ -1,7 +1,7 @@
 package cn.wwl.radio.executor.functions;
 
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.executor.ConsoleFunction;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TextMarker;
 
 import java.util.List;
@@ -23,11 +23,7 @@ public class CustomChatFunction implements ConsoleFunction {
     public void onExecuteFunction(List<String> parameter) {
         String s = parameter.get(0);
         if (s.equals("ClearChat")) {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < 100; i++) {
-                builder.append(TextMarker.换行.getCode());
-            }
-            SocketTransfer.getInstance().pushToConsole("say " + builder.toString());
+            SocketTransfer.getInstance().pushToConsole("say " + String.valueOf(TextMarker.换行.getCode()).repeat(20));
             return;
         }
 

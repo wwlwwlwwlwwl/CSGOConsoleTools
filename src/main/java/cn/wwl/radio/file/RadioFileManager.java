@@ -4,10 +4,14 @@ import cn.wwl.radio.console.ConsoleManager;
 import net.platinumdigitalgroup.jvdf.VDFNode;
 import net.platinumdigitalgroup.jvdf.VDFParser;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class RadioFileManager {
 
@@ -167,7 +171,7 @@ public class RadioFileManager {
             ConfigLoader.writeFile(root.toVDFConfig(), radioFile);
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try save Radio config Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -244,6 +248,11 @@ public class RadioFileManager {
     public void updateGroupTitle(RadioGroup group, String title) {
         VDFNode groups = root.getSubNode("RadioPanel.txt").getSubNode("Groups").getSubNode(group.getGroupName());
         groups.setValue("title",title);
+    }
+
+    public String getGroupTitle(RadioGroup group) {
+        VDFNode groups = root.getSubNode("RadioPanel.txt").getSubNode("Groups").getSubNode(group.getGroupName());
+        return groups.getString("title");
     }
 
     public RadioObject getRadioObjectByName(String name) {

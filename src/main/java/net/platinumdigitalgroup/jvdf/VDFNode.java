@@ -16,10 +16,10 @@ limitations under the License.
 
 package net.platinumdigitalgroup.jvdf;
 
-import org.apache.commons.text.PatchStringEscapeUtils;
-
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * An iterable tree structure that represents a set of key-value pairs in a VDF document.

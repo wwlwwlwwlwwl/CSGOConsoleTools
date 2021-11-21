@@ -7,7 +7,8 @@ import org.jsoup.Jsoup;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,12 +43,6 @@ public class SoxSoundUtils {
                 //sox.exe music.mp3 -r 22050 -c 1 -b 16 --multi-threaded -V1 voice_input.wav
                 Process process = Runtime.getRuntime().exec(cmdLine);
 
-//                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//                String s = "";
-//                while ((s = reader.readLine()) != null) {
-//                    System.out.println("Debug> " + s);
-//                }
-
                 int exitCode = process.waitFor();
                 if (exitCode == 0) {
                     cache.add(saveDir);
@@ -57,7 +52,7 @@ public class SoxSoundUtils {
                 }
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Cache music " + music.getName() + " Throw Exception!");
-                e.printStackTrace();
+                ConsoleManager.getConsole().printException(e);
             }
         });
     }
@@ -78,10 +73,11 @@ public class SoxSoundUtils {
         if (!MUSIC_DIR.exists()) {
             if (MUSIC_DIR.mkdir()) {
                 ConsoleManager.getConsole().printToConsole("MusicDir created. Place music to " + MUSIC_DIR.getAbsolutePath());
-                CACHE_DIR.mkdir();
+                if (CACHE_DIR.mkdir()) {
+                    ConsoleManager.getConsole().printError("Try create Cache dir Failed!");
+                }
             } else {
                 ConsoleManager.getConsole().printToConsole("Make musicPath failed!");
-                return;
             }
         }
     }
@@ -110,8 +106,8 @@ public class SoxSoundUtils {
                 downloadSox(soxZip);
                 unzipSox(soxZip, soxPath);
             } catch (Exception e) {
-                e.printStackTrace();
                 ConsoleManager.getConsole().printToConsole("Try Deploy Sox throw Exception!");
+                ConsoleManager.getConsole().printException(e);
                 return false;
             }
         }
@@ -119,7 +115,7 @@ public class SoxSoundUtils {
         try {
             Process process = Runtime.getRuntime().exec(soxFile.getAbsolutePath() + " --version");
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String s = "";
+            String s;
             while ((s = reader.readLine()) != null) {
                 if (s.contains("SoX")) {
                     soxExecuteFile = soxFile;
@@ -129,8 +125,8 @@ public class SoxSoundUtils {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             ConsoleManager.getConsole().printToConsole("Try Check Sox file Throw Exception!");
+            ConsoleManager.getConsole().printException(e);
             return false;
         }
         return false;
@@ -138,7 +134,10 @@ public class SoxSoundUtils {
 
     public static void downloadSox(File savePath) throws IOException {
         if (savePath.exists()) {
-            savePath.delete();
+            if (savePath.delete()) {
+                ConsoleManager.getConsole().printError("Try delete Cached Sox Failed!");
+                return;
+            }
         }
         ConsoleManager.getConsole().printToConsole("Sox not Found! Starting Download Sox...");
         Connection.Response response = Jsoup.connect("https://wwlwwl.xyz/sox.zip")
@@ -164,7 +163,7 @@ public class SoxSoundUtils {
             File file = new File(soxPath,name);
             ConsoleManager.getConsole().printToConsole("Unzipping " + file.getName() + "...");
             FileOutputStream outputStream = new FileOutputStream(file);
-            int length = 0;
+            int length;
             while ((length = zipInputStream.read(buffer)) > 0) {
                 outputStream.write(buffer,0,length);
             }

@@ -41,17 +41,19 @@ public class FakeCaseManager {
     public static class CSGOCaseDrop {
         public static final CSGOCaseDrop ERROR_ITEM = new CSGOCaseDrop(CSGOItem.ERROR,0.0F);
 
-        private static Random random = new Random();
+        private Random random;
         private final CSGOItem caseItem;
         private final float skinFloat;
 
         public CSGOCaseDrop(CSGOItem item) {
             this.caseItem = item;
+            this.random = new Random();
             this.skinFloat = random.nextFloat(item.getMinFloat(),item.getMaxFloat());
         }
 
         public CSGOCaseDrop(CSGOItem item, float skinFloat) {
             this.caseItem = item;
+            this.random = new Random();
             this.skinFloat = skinFloat;
         }
 
@@ -97,8 +99,8 @@ public class FakeCaseManager {
         private final CSGOWeapons weaponName;
         private final String skinName;
         private final Rarity rarity;
-        private float minFloat;
-        private float maxFloat;
+        private final float minFloat;
+        private final float maxFloat;
 
 
         public CSGOItem(CSGOWeapons weaponName,String skinName,Rarity rarity,float minFloat,float maxFloat) {

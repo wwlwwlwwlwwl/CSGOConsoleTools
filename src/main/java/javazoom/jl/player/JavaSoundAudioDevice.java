@@ -24,13 +24,12 @@
 
 package javazoom.jl.player;
 
-import javax.sound.sampled.*;
-
 import javazoom.jl.decoder.Decoder;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.advanced.event.MusicEvent;
 import javazoom.jl.player.advanced.event.MusicEventListener;
 
+import javax.sound.sampled.*;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -2,7 +2,10 @@ package cn.wwl.radio.music;
 
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.file.ConfigLoader;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -11,10 +14,10 @@ import java.util.List;
 
 public class NeteaseMusicSource implements MusicSource {
 
-    //https://163.lpddr5.cn/
+    //https://163.lpddr5.cn/ 502 Bad Gateway
     //https://api.music.imsyy.top/
     //https://v2.alapi.cn/api/music 需要API_KEY
-    private static final String API_LINK = "https://163.lpddr5.cn";
+    private static final String API_LINK = "https://api.music.imsyy.top";
     private static final String API_TOKEN = ConfigLoader.getConfigObject().getAPIToken();
 
     @Override
@@ -40,7 +43,7 @@ public class NeteaseMusicSource implements MusicSource {
             return parseSearchMusic(page.body().html());
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try Search Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return List.of();
     }
@@ -63,7 +66,7 @@ public class NeteaseMusicSource implements MusicSource {
             return getResultURL(page.body().html());
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try Get URL Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return "";
     }
@@ -78,7 +81,7 @@ public class NeteaseMusicSource implements MusicSource {
         }
 
         JsonElement data = mainTree.get("data");
-        JsonObject object = null;
+        JsonObject object;
         if (data.isJsonArray()) {
             object = data.getAsJsonArray().get(0).getAsJsonObject();
         } else {

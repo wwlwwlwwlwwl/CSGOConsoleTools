@@ -1,8 +1,6 @@
 package cn.wwl.radio.file;
 
 import cn.wwl.radio.console.ConsoleManager;
-import net.platinumdigitalgroup.jvdf.VDFNode;
-import net.platinumdigitalgroup.jvdf.VDFParser;
 
 import java.io.*;
 import java.util.*;
@@ -77,7 +75,7 @@ public class SteamUtils {
                 patchLocalConfig(userConfig);
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Try parse User " + file.getName() + " Config Throw Exception!");
-                e.printStackTrace();
+                ConsoleManager.getConsole().printException(e);
             }
         }
         ConsoleManager.getConsole().printToConsole("Check user Config done.");
@@ -226,11 +224,10 @@ public class SteamUtils {
         if (patched) {
             if (launchLine != -1) {
                 String userLine = strMap.get(launchLine).split("\"\t\t\"")[1].replace("\"","");
-                String newLine = "";
+                StringBuilder newLine = new StringBuilder();
                 List<String> split = Arrays.stream(userLine.split(" ")).toList();
                 boolean patchNext = false;
-                for (int i = 0; i < split.size(); i++) {
-                    String s = split.get(i);
+                for (String s : split) {
                     if (patchNext) {
                         s = String.valueOf(ConfigLoader.getConfigObject().getGamePort());
                         patchNext = false;
@@ -238,9 +235,9 @@ public class SteamUtils {
                     if (s.equals("-netconport")) {
                         patchNext = true;
                     }
-                    newLine += s + " ";
+                    newLine.append(s).append(" ");
                 }
-                String result = "\t\t\t\t\t\t\"LaunchOptions\"\t\t\"" + newLine.trim() + "\"";
+                String result = "\t\t\t\t\t\t\"LaunchOptions\"\t\t\"" + newLine.toString().trim() + "\"";
                 strMap.put(launchLine, result);
                 ConsoleManager.getConsole().printToConsole("Updated ConfigFile: " + userConfig.getAbsolutePath() + ", Reason: Change Port.");
                 saveUserConfig(userConfig, strMap);
@@ -319,7 +316,7 @@ public class SteamUtils {
             ConfigLoader.writeFile(builder.toString().trim(), configFile);
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try write ConfigFile: " + configFile.getAbsolutePath() + " Throw Excpetion!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -331,7 +328,7 @@ public class SteamUtils {
                     "\"Get-WmiObject -Query \\\"select * from Win32_Process where name='" + name + "'\\\"" +
                     " | Format-List -Property \\\"Path\\\"\"");
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String s = "";
+            String s;
             while ((s = reader.readLine()) != null) {
                 if (s.toLowerCase(Locale.ROOT).contains(name.toLowerCase(Locale.ROOT))) {
                     //Path : C:\Program Files (x86)\Tencent\QQ\tin\QQ.exe
@@ -340,7 +337,7 @@ public class SteamUtils {
             }
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Throw Exception while getFileLocation!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return "";
     }

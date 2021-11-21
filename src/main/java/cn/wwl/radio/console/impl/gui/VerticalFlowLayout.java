@@ -1,14 +1,6 @@
 package cn.wwl.radio.console.impl.gui;
 
 import java.awt.*;
-import java.util.*;
-import javax.swing.*;
-
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
 
 /**
  * 垂直流布局类<br>
@@ -311,15 +303,9 @@ public class VerticalFlowLayout implements LayoutManager {
      * */
     private int moveComponents(Container target, int x, int y, int width, int height,int colStart, int colEnd) {
         switch (align) {
-            case TOP:
-                y += 0;
-                break;
-            case CENTER:
-                y += height / 2;
-                break;
-            case BOTTOM:
-                y += height;
-                break;
+            case TOP -> y += 0;
+            case CENTER -> y += height / 2;
+            case BOTTOM -> y += height;
         }
         for (int i = colStart ; i < colEnd ; i++) {
             Component m = target.getComponent(i);
@@ -337,12 +323,12 @@ public class VerticalFlowLayout implements LayoutManager {
      * @return 此布局的字符串表示形式
      * */
     public String toString() {
-        String str = "";
-        switch (align) {
-            case TOP:  str = ",align=top"; break;
-            case CENTER: str = ",align=center"; break;
-            case BOTTOM: str = ",align=bottom"; break;
-        }
+        String str = switch (align) {
+            case TOP -> ",align=top";
+            case CENTER -> ",align=center";
+            case BOTTOM -> ",align=bottom";
+            default -> "";
+        };
         return getClass().getName() + "[hgap=" + hgap + ",vgap=" + vgap + ",hfill=" + hfill + str + "]";
     }
 

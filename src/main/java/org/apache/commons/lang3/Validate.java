@@ -17,7 +17,6 @@
 package org.apache.commons.lang3;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;

@@ -7,14 +7,17 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static cn.wwl.radio.console.impl.gui.ManagerPanel.BACKGROUND_COLOR;
 import static cn.wwl.radio.console.impl.gui.ManagerPanel.setSkin;
@@ -30,7 +33,7 @@ public class RadioPreviewPanel {
     private JScrollPane resultPanel;
     private JTextPane resultPane;
 
-    private static JFrame frame = new JFrame("RadioPreviewPanel");
+    private static final JFrame frame = new JFrame("RadioPreviewPanel");
     private static volatile RadioPreviewPanel instance;
     private static RadioCallback callback;
     private static boolean inited = false;
@@ -135,7 +138,7 @@ public class RadioPreviewPanel {
             document.remove(0, document.getLength());
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try clear Document Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         if (ATTRIBUTE_MAP.isEmpty()) {
             availableColors.forEach(marker -> ATTRIBUTE_MAP.put(marker, new SimpleAttributeSet() {{
@@ -216,7 +219,7 @@ public class RadioPreviewPanel {
             }
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try render First RadioPanel Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -314,7 +317,7 @@ public class RadioPreviewPanel {
         return mainPanel;
     }
 
-    public static interface RadioCallback {
+    public interface RadioCallback {
         void handle(String radio);
     }
 }

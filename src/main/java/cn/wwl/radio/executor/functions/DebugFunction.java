@@ -1,7 +1,7 @@
 package cn.wwl.radio.executor.functions;
 
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.executor.ConsoleFunction;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TextMarker;
 
 import java.util.List;

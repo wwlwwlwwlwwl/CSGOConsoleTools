@@ -1,11 +1,15 @@
 package cn.wwl.radio.console.impl.gui;
 
+import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.network.SocketTransfer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -38,7 +42,7 @@ public class ManagerPanel {
     private enum MessageType {
         NORMAL,
         ERROR,
-        CONSOLE;
+        CONSOLE
     }
 
     private static final List<List<String>> LISTS = List.of(normalList, errorList, consoleList);
@@ -61,8 +65,9 @@ public class ManagerPanel {
     private JButton activateButton;
     private static ManagerPanel instance;
     private static SettingsPanel settingsPanel;
-    private static JFrame frame = new JFrame("ManagerPanel");
+    private static final JFrame frame = new JFrame("ManagerPanel");
 
+    private static boolean minimizeTray = false;
 
     public ManagerPanel() {
         try {
@@ -83,23 +88,6 @@ public class ManagerPanel {
             UIManager.put("FormattedTextField.foreground", ManagerPanel.FOREGROUND_COLOR);
             UIManager.put("ScrollBar.foreground", ManagerPanel.FOREGROUND_COLOR);
 
-//            String[] str = {
-//                    "info",
-//                    "infoText",
-//                    "menu",
-//                    "menuText",
-//                    "scrollbar",
-//                    "text",
-//                    "textHighlight",
-//                    "textHighlightText",
-//                    "textInactiveText",
-//                    "textText",
-//                    "window",
-//                    "windowText"
-//            };
-//            for (String s : str) {
-//                UIManager.put(s, ManagerPanel.FOREGROUND_COLOR);
-//            }
         } catch (Exception ignored) {
         }
 
@@ -152,9 +140,18 @@ public class ManagerPanel {
                     SocketTransfer.getInstance().shutdown(true);
                 }
             }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+                if (!minimizeTray) {
+                    minimizeTray = true;
+                    MinimizeTrayConsole.createTrayMessage("Application Now Minimize to Tray!\nDouble Click the TrayIcon to Show Again!");
+                }
+                hideManagerPanel();
+            }
         });
         frame.setContentPane(instance.mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 //        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
         frame.setVisible(false);
@@ -174,6 +171,9 @@ public class ManagerPanel {
 
     public static void showManagerPanel() {
         frame.setVisible(true);
+        frame.setAutoRequestFocus(true);
+        frame.setFocusable(true);
+        frame.toFront();
     }
 
     public static void hideManagerPanel() {
@@ -274,7 +274,7 @@ public class ManagerPanel {
         try {
             styledDocument.insertString(styledDocument.getLength(), s + "\n", prevAttribute);
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -318,7 +318,7 @@ public class ManagerPanel {
             styledDocument.remove(0, styledDocument.getLength());
             styledDocument.insertString(0, builder.toString(), simpleAttributeSet);
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 

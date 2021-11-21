@@ -1,7 +1,7 @@
 package cn.wwl.radio.executor.functions;
 
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.executor.ConsoleFunction;
+import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TextMarker;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class CustomRadioFunction implements ConsoleFunction {
     @Override
     public void onExecuteFunction(List<String> parameter) {
         String radio = "hi";
-        String message = null;
+        String message;
         if (parameter.size() == 1) {
             message = parameter.get(0);
         } else if (parameter.size() == 2) {

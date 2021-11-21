@@ -1,16 +1,13 @@
 package cn.wwl.radio.network;
 
 import cn.wwl.radio.console.ConsoleManager;
-import cn.wwl.radio.console.impl.gui.MinimizeTrayConsole;
-import cn.wwl.radio.console.impl.gui.TrayMessageCallback;
 import cn.wwl.radio.network.task.ListenerTask;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -36,7 +33,7 @@ public class ConsoleListener implements Runnable {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             while (!Thread.currentThread().isInterrupted()) {
-                String read = "";
+                String read;
                 try {
                     read = reader.readLine();
                 } catch (Exception e) {
@@ -65,7 +62,7 @@ public class ConsoleListener implements Runnable {
                         task.listen(read);
                     } catch (Exception e) {
                         ConsoleManager.getConsole().printError("Try execute Listen task: " + entry.getKey() + " throw Exception!");
-                        e.printStackTrace();
+                        ConsoleManager.getConsole().printException(e);
                     }
                     if (task.isShouldRemove()) {
                         tasks.remove(entry.getKey());
@@ -76,7 +73,7 @@ public class ConsoleListener implements Runnable {
                     discCount = 0;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 }

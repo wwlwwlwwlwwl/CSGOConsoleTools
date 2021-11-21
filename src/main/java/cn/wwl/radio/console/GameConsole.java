@@ -34,4 +34,10 @@ public interface GameConsole {
      * 请求清空整个控制台
      */
     void clear();
+
+    /**
+     * 将异常输入向控制台
+     * @param e 异常
+     */
+    void printException(Exception e);
 }

@@ -1,13 +1,11 @@
 package cn.wwl.radio.console.impl;
 
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.console.GameConsole;
+import cn.wwl.radio.network.SocketTransfer;
 
 import java.util.Scanner;
 
 public class CMDConsole implements GameConsole {
-
-    private static final String INPUT_HEAD = "Input > ";
 
     @Override
     public void init() {
@@ -35,7 +33,7 @@ public class CMDConsole implements GameConsole {
         printToConsole("Console ready. Enter everything will redirect to console.");
         Scanner scanner = new Scanner(System.in).useDelimiter("\n");
         while (!Thread.currentThread().isInterrupted()) {
-            String next = "";
+            String next;
             try {
                 next = scanner.next();
             } catch (Exception e) { //Ignore any Scanner exception, go Next;
@@ -56,5 +54,10 @@ public class CMDConsole implements GameConsole {
         for (int i = 0; i < 10000; i++) {
             System.out.println("\t");
         }
+    }
+
+    @Override
+    public void printException(Exception e) {
+        e.printStackTrace();
     }
 }

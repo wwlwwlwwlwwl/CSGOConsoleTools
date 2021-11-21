@@ -41,7 +41,7 @@ public class ConfigLoader {
             checkConfigUpdate(element, configObject);
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try parse the Config file Throw Exception! Check your config File!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
             if (configObject == null) { //第一次加载直接抛出异常 退出程序
                 System.exit(1);
             }
@@ -71,7 +71,10 @@ public class ConfigLoader {
             }
             InputStream inputStream = new FileInputStream(file);
             byte[] head = new byte[3];
-            inputStream.read(head);
+            if (inputStream.read(head) == -1) {
+                ConsoleManager.getConsole().printError("Try check File: " + file.getName() + " Charset Failed! Not enough Head Data!");
+                return Charset.defaultCharset();
+            }
             String code = "GBK";
             if (head[0] == -1 && head[1] == -2) {
                 code = "UTF-16";
@@ -89,14 +92,14 @@ public class ConfigLoader {
                     if (a > 0x7F) {//排除开头的英文或者数字字符
                         if (0xE3 < a & a < 0xE9 && b > 0x7F && b < 0xC0) {//符合utf8
                             code = "UTF-8";
-                            break;
-                        } else break;
+                        }
+                        break;
                     }
                 }
             }
             return Charset.forName(code);
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return Charset.defaultCharset();
     }
@@ -105,10 +108,13 @@ public class ConfigLoader {
         if (!CONFIG_FILE.exists() || CONFIG_FILE.length() == 0) {
             ConsoleManager.getConsole().printToConsole("Config file not exists!");
             try {
-                CONFIG_FILE.createNewFile();
+                if (CONFIG_FILE.createNewFile()) {
+                    ConsoleManager.getConsole().printError("Try create Config File Failed!");
+                    return;
+                }
                 writeObject(false);
             } catch (IOException e) {
-                e.printStackTrace();
+                ConsoleManager.getConsole().printException(e);
             }
         }
     }
@@ -136,7 +142,7 @@ public class ConfigLoader {
                     updateField.set(object, o);
                 } catch (Exception e) {
                     ConsoleManager.getConsole().printToConsole("Set value for " + updateField.getName() + " Failed!");
-                    e.printStackTrace();
+                    ConsoleManager.getConsole().printException(e);
                 }
             }
 
@@ -167,7 +173,7 @@ public class ConfigLoader {
             ConsoleManager.getConsole().printToConsole("Config file saved.");
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try write config but throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 
@@ -189,7 +195,7 @@ public class ConfigLoader {
             return strList;
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try read File throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return List.of();
     }

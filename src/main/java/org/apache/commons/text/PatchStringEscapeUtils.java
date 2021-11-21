@@ -16,17 +16,11 @@
  */
 package org.apache.commons.text;
 
+import org.apache.commons.text.translate.*;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.text.translate.AggregateTranslator;
-import org.apache.commons.text.translate.CharSequenceTranslator;
-import org.apache.commons.text.translate.EntityArrays;
-import org.apache.commons.text.translate.JavaUnicodeEscaper;
-import org.apache.commons.text.translate.LookupTranslator;
-import org.apache.commons.text.translate.OctalUnescaper;
-import org.apache.commons.text.translate.UnicodeUnescaper;
 
 /**
  * <p>

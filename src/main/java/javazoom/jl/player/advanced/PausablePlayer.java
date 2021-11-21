@@ -1,11 +1,9 @@
 package javazoom.jl.player.advanced;
 
-import cn.wwl.radio.utils.Timer;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.Player;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Random;
 import java.util.concurrent.Executor;

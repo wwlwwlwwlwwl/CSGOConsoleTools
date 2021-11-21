@@ -28,7 +28,10 @@ public interface MusicSource {
         }
 
         if (!DOWNLOAD_DIR.exists()) {
-            DOWNLOAD_DIR.mkdir();
+            if (!DOWNLOAD_DIR.mkdir()) {
+                ConsoleManager.getConsole().printError("Try create Download Dir Failed!");
+                return null;
+            }
         }
 
         String name = result.getName() + " - " + result.getAuthor() + ".mp3";
@@ -49,7 +52,9 @@ public interface MusicSource {
 
     default void downloadObject(String url, File savePath) {
         if (savePath.exists()) {
-            savePath.delete();
+            //Using download Cache.
+            return;
+//            savePath.delete();
         }
         try {
             Connection.Response response = Jsoup.connect(url)
@@ -65,7 +70,7 @@ public interface MusicSource {
             out.close();
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try download Object from: " + url + " Throw exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 }

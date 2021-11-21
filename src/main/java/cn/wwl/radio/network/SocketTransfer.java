@@ -7,8 +7,8 @@ import cn.wwl.radio.console.impl.gui.TrayMessageCallback;
 import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.executor.functions.CustomMusicFunction;
 import cn.wwl.radio.file.ConfigLoader;
-import cn.wwl.radio.network.task.ListenerTask;
 import cn.wwl.radio.file.SteamUtils;
+import cn.wwl.radio.network.task.ListenerTask;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -26,12 +26,11 @@ public class SocketTransfer {
 
     public static final String ECHO_HEAD = "ConsoleTools";
     public static final String NEW_CLIENT_LOGIN = "onNewClientLogin-";
-    private static int CONNECT_PORT;
     private static final SocketTransfer socketTransfer = new SocketTransfer();
 
     private Socket socket;
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-    private static ConsoleListener listener = new ConsoleListener();;
+    private static ConsoleListener listener = new ConsoleListener();
     private BufferedOutputStream outputStream = null;
     private long bootTimestamp = 0L;
     private static String userName;
@@ -41,7 +40,7 @@ public class SocketTransfer {
     private SocketTransfer(){}
 
     public void start() {
-        CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
+        int CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
         ConsoleManager.getConsole().printToConsole("System Charset: " + Charset.defaultCharset() + ", Config Charset: " + ConfigLoader.getConfigCharset());
         ConsoleManager.getConsole().printToConsole("Watching Port: " + CONNECT_PORT + ", Waiting Game start...");
         if (!isReboot) {
@@ -79,7 +78,7 @@ public class SocketTransfer {
             outputStream = new BufferedOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try get OutputStream Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
             try {
                 Thread.sleep(500);
                 outputStream = new BufferedOutputStream(socket.getOutputStream());
@@ -140,7 +139,7 @@ public class SocketTransfer {
             executor.shutdown();
             socket.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         System.exit(0);
     }
@@ -152,18 +151,12 @@ public class SocketTransfer {
             } catch (IOException ignored) {}
             socket = null;
         }
-        MinimizeTrayConsole.createTrayMessage("Game is Closed, App will Waiting Game back.\nClick to Show the GUI.\nDouble click this to Close App.",
-                new TrayMessageCallback() {
-                    @Override
-                    public void doubleClickMessage() {
-                        SocketTransfer.getInstance().shutdown(false);
-                    }
-
-                    @Override
-                    public void clickMessage() {
-                        ManagerPanel.showManagerPanel();
-                    }
-                });
+        MinimizeTrayConsole.createTrayMessage("Game is Closed, App will Waiting Game back.\nClick to Show the GUI.\nDouble click this to Close App.", (type) -> {
+            switch (type) {
+                case TrayMessageCallback.SINGLE_CLICK -> ManagerPanel.showManagerPanel();
+                case TrayMessageCallback.DOUBLE_CLICK -> SocketTransfer.getInstance().shutdown(false);
+            }
+        });
         CustomMusicFunction.stopLobbyMusic(true);
         ConsoleManager.getConsole().printToConsole("Start reboot Application...");
         isReboot = true;
@@ -270,7 +263,7 @@ public class SocketTransfer {
             outputStream.flush();
         } catch (IOException e) {
             ConsoleManager.getConsole().printToConsole("Write to Game Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
     }
 

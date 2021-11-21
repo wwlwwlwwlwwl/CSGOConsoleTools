@@ -22,8 +22,6 @@ package javazoom.jl.decoder;
 
 import java.io.*;
 import java.lang.reflect.Array;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /**
  * The JavaLayerUtils class is not strictly part of the JavaLayer API.

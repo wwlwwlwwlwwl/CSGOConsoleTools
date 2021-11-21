@@ -2,7 +2,6 @@ package cn.wwl.radio.network;
 
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.file.ConfigLoader;
-import cn.wwl.radio.utils.Timer;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -11,9 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 老是莫名其妙的卡按键 按任何按键都没用
@@ -35,7 +32,7 @@ public class SocketConsole {
                         startListener();
                     } catch (IOException e) {
                         ConsoleManager.getConsole().printError("Try start RemoteListener Throw exception!");
-                        e.printStackTrace();
+                        ConsoleManager.getConsole().printException(e);
                     }
                 });
             } else {
@@ -58,7 +55,7 @@ public class SocketConsole {
                 executor.execute(command);
             } catch (IOException e) {
                 ConsoleManager.getConsole().printError("Try service " + accept + " Throw exception!");
-                e.printStackTrace();
+                ConsoleManager.getConsole().printException(e);
             }
         }
     }

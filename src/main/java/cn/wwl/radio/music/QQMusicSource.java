@@ -1,7 +1,10 @@
 package cn.wwl.radio.music;
 
 import cn.wwl.radio.console.ConsoleManager;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -69,7 +72,7 @@ public class QQMusicSource implements MusicSource {
             return parseSearchMusic(page.body().html());
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try Search Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return List.of();
     }
@@ -92,7 +95,7 @@ public class QQMusicSource implements MusicSource {
             return getResultURL(page.body().html());
         } catch (Exception e) {
             ConsoleManager.getConsole().printError("Try Get URL Throw Exception!");
-            e.printStackTrace();
+            ConsoleManager.getConsole().printException(e);
         }
         return "";
     }

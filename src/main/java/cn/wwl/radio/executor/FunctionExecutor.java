@@ -1,18 +1,20 @@
 package cn.wwl.radio.executor;
 
-import cn.wwl.radio.file.RadioFileManager;
-import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.executor.functions.*;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.ConfigObject;
+import cn.wwl.radio.file.RadioFileManager;
 import cn.wwl.radio.file.SteamUtils;
+import cn.wwl.radio.network.SocketTransfer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class FunctionExecutor {
 
@@ -152,7 +154,7 @@ public class FunctionExecutor {
                 }
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Execute PlayerChat throw Exception!");
-                e.printStackTrace();
+                ConsoleManager.getConsole().printException(e);
             }
         });
 
@@ -191,7 +193,7 @@ public class FunctionExecutor {
                             func.onTick();
                         } catch (Exception e) {
                             ConsoleManager.getConsole().printError("Try Tick function: " + name + " Throw Exception!");
-                            e.printStackTrace();
+                            ConsoleManager.getConsole().printException(e);
                         }
                     }
         }), 0, 10, TimeUnit.MILLISECONDS);
