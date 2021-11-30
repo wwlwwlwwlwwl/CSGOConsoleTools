@@ -18,10 +18,39 @@ public interface MusicSource {
     File DOWNLOAD_DIR = new File(SoxSoundUtils.getMusicDir(),"downloads");
     Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().serializeNulls().create();
 
-    List<MusicResult> searchMusic(String name);
+    /**
+     * Use API search Music, Return Formatted music
+     * @param name Music name
+     * @return Packed Music result
+     */
+    List<MusicResult> searchMusic(String name, int limit);
+
+    default List<MusicResult> searchMusic(String name) {
+        return searchMusic(name,9);
+    }
+
+    /**
+     * Get Music Downloaded Link
+     * @see cn.wwl.radio.music.MusicSource#searchMusic(String) 
+     * @param result Music Search Result
+     * @return Music download link
+     */
     String getMusicDownloadLink(MusicResult result);
+
+    /**
+     * Get Music Download link, Used in {@code getMusicDownloadLink(result)}
+     * @see cn.wwl.radio.music.MusicSource#getMusicDownloadLink(MusicResult)
+     * @param urlPage API return page
+     * @return Music download Link
+     */
     String getResultURL(String urlPage);
 
+    /**
+     * Download the Music by MusicResult
+     * @see cn.wwl.radio.music.MusicSource#searchMusic(String)
+     * @param result Searched Music result
+     * @return Downloaded music File
+     */
     default File downloadMusic(MusicResult result) {
         if (result == null) {
             return null;
@@ -34,7 +63,8 @@ public interface MusicSource {
             }
         }
 
-        String name = result.getName() + " - " + result.getAuthor() + ".mp3";
+        //ProcessCall Couldn't format the ['], so Removed it
+        String name = (result.getName() + " - " + result.getAuthor() + ".mp3").replace("'","");
         File downloadMusic = new File(DOWNLOAD_DIR,name);
 
         if (downloadMusic.exists()) {
@@ -50,7 +80,7 @@ public interface MusicSource {
         return downloadMusic;
     }
 
-    default void downloadObject(String url, File savePath) {
+    private void downloadObject(String url, File savePath) {
         if (savePath.exists()) {
             //Using download Cache.
             return;

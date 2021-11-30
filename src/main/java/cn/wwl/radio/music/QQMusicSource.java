@@ -50,7 +50,7 @@ public class QQMusicSource implements MusicSource {
     }
 
     @Override
-    public List<MusicResult> searchMusic(String name) {
+    public List<MusicResult> searchMusic(String name, int limit) {
         if (name == null || name.length() == 0 || name.equals(" ")) {
             return List.of();
         }
@@ -66,7 +66,7 @@ public class QQMusicSource implements MusicSource {
                     .data(
                             "p", "1",
                             "w", name,
-                            "n", "9"
+                            "n", String.valueOf(limit)
                     )
                     .get();
             return parseSearchMusic(page.body().html());

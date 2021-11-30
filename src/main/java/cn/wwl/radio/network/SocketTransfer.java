@@ -41,6 +41,7 @@ public class SocketTransfer {
 
     public void start() {
         int CONNECT_PORT = ConfigLoader.getConfigObject().getGamePort();
+        userName = ConfigLoader.getConfigObject().getPreviousName();
         ConsoleManager.getConsole().printToConsole("System Charset: " + Charset.defaultCharset() + ", Config Charset: " + ConfigLoader.getConfigCharset());
         ConsoleManager.getConsole().printToConsole("Watching Port: " + CONNECT_PORT + ", Waiting Game start...");
         if (!isReboot) {
@@ -166,7 +167,12 @@ public class SocketTransfer {
     private void echoLogin() {
         String prefix = ConfigLoader.getConfigObject().getPrefix();
         pushToConsole("echo " + NEW_CLIENT_LOGIN + bootTimestamp);
-        pushToConsole("showconsole;name;clear;con_filter_enable 2;con_filter_text_out \"Unknown\";");
+        pushToConsole("status;" + //获取是否在游戏中,用于LobbyMusic
+                "name;" + //获取玩家ID 用于玩家ID检测
+                "con_filter_enable 2;" +
+                "con_filter_text_out \"Unknown\";" + //打开文字过滤,过滤Unknown,避免Unknown command刷屏
+                "clear;" + //清空控制台,准备开始输出欢迎文字
+                "showconsole"); //显示控制台
         pushToConsole("echo .......##.####.##......##.########.####..");
         pushToConsole("echo .......##..##..##..##..##.##........##...");
         pushToConsole("echo .......##..##..##..##..##.##........##...");
@@ -214,22 +220,18 @@ public class SocketTransfer {
      * @return 玩家的ID, 在获取到之前会返回null
      */
     public String getPlayerName() {
-        if (userName == null) {
-            addListenerTask("GetPlayerName",new ListenerTask() {
-                private boolean remove;
-                @Override
-                public void listen(String message) {
-                    if (message.contains("\"name\" = ") && message.contains("unnamed")) {
-                        String name = message.substring(10,message.indexOf("\" ( def. \"unnamed\" )"));
-                        ConsoleManager.getConsole().printToConsole("Got player name: " + name);
+        String taskName = "GetPlayerName";
+        if (!listener.haveListener(taskName)) {
+            addListenerTask(taskName, message -> {
+                if (message.contains("\"name\" = ") && message.contains("unnamed")) {
+                    String name = message.substring(10, message.indexOf("\" ( def. \"unnamed\" )"));
+                    String previousName = ConfigLoader.getConfigObject().getPreviousName();
+                    if (!previousName.equals(name)) {
+                        ConsoleManager.getConsole().printToConsole("Update player name: " + name);
                         userName = name;
-                        remove = true;
+                        ConfigLoader.getConfigObject().setPreviousName(userName);
+                        ConfigLoader.writeConfigObject();
                     }
-                }
-
-                @Override
-                public boolean isShouldRemove() {
-                    return remove;
                 }
             });
         }
@@ -253,7 +255,7 @@ public class SocketTransfer {
      * @param command 要输出的命令
      */
     public void pushToConsole(String command) {
-        if (outputStream == null) {
+        if (outputStream == null || (socket == null || !socket.isConnected() || socket.isClosed())) {
             ConsoleManager.getConsole().printToConsole("Socket not connected!");
             return;
         }
@@ -262,7 +264,7 @@ public class SocketTransfer {
             outputStream.write((command + "\n").getBytes(StandardCharsets.UTF_8));
             outputStream.flush();
         } catch (IOException e) {
-            ConsoleManager.getConsole().printToConsole("Write to Game Throw Exception!");
+            ConsoleManager.getConsole().printError("Write to Game Throw Exception!");
             ConsoleManager.getConsole().printException(e);
         }
     }

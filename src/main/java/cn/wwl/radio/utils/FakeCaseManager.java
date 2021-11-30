@@ -76,12 +76,12 @@ public class FakeCaseManager {
         public String getColorSkinName() {
             String color = "";
             switch (getSkinRarity()) {
-                case Common -> color = TextMarker.灰色.getHumanCode();
-                case Uncommon -> color = TextMarker.灰蓝色.getHumanCode();
-                case Rare -> color = TextMarker.蓝色.getHumanCode();
-                case Mythical,Legendary -> color = TextMarker.紫色.getHumanCode();
-                case Immortal -> color = TextMarker.淡红色.getHumanCode();
-                case Contraband -> color = TextMarker.金色.getHumanCode();
+                case Common -> color = TextMarker.Grey.getHumanCode();
+                case Uncommon -> color = TextMarker.CTBlue.getHumanCode();
+                case Rare -> color = TextMarker.Blue.getHumanCode();
+                case Mythical,Legendary -> color = TextMarker.Purple.getHumanCode();
+                case Immortal -> color = TextMarker.LightRed.getHumanCode();
+                case Contraband -> color = TextMarker.Gold.getHumanCode();
             }
             return color + getSkinName();
         }
@@ -93,8 +93,8 @@ public class FakeCaseManager {
     }
 
     public static class CSGOItem {
-        public static final CSGOItem KNIFE = create(CSGOWeapons.CUSTOM,"蝴蝶刀 (★) | 伽马多普勒",EasyCodeRarity.红色 ,0.08);
-        public static final CSGOItem ERROR = create(CSGOWeapons.CUSTOM,"参数有误",EasyCodeRarity.白色);
+        public static final CSGOItem KNIFE = create(CSGOWeapons.CUSTOM,"蝴蝶刀 (★) | 伽马多普勒",Rarity.Immortal ,0.08);
+        public static final CSGOItem ERROR = create(CSGOWeapons.CUSTOM,"参数有误",Rarity.Common);
 
         private final CSGOWeapons weaponName;
         private final String skinName;
@@ -139,72 +139,60 @@ public class FakeCaseManager {
             return new CSGOItem(weapons,skinName,rarity,0F,1F);
         }
 
-        public static CSGOItem create(CSGOWeapons weapons,String skinName,EasyCodeRarity rarity) {
-            return new CSGOItem(weapons,skinName,rarity.getRarity(),0F,1F);
-        }
-
         public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity,double maxFloat) {
             return new CSGOItem(weapons,skinName,rarity,0,(float)maxFloat);
         }
 
-        public static CSGOItem create(CSGOWeapons weapons,String skinName,EasyCodeRarity rarity,double maxFloat) {
-            return new CSGOItem(weapons,skinName,rarity.getRarity(),0,(float)maxFloat);
-        }
-
         public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity,double minFloat,double maxFloat) {
             return new CSGOItem(weapons,skinName,rarity,(float)minFloat,(float)maxFloat);
-        }
-
-        public static CSGOItem create(CSGOWeapons weapons,String skinName,EasyCodeRarity rarity,double minFloat,double maxFloat) {
-            return new CSGOItem(weapons,skinName,rarity.getRarity(),(float)minFloat,(float)maxFloat);
         }
     }
 
 
     public enum CSGOCases {
         DANGER_ZONE_CASE("头号特训",
-                CSGOItem.create(CSGOWeapons.MP9,"中度威胁",EasyCodeRarity.蓝色,0.75),
-                CSGOItem.create(CSGOWeapons.GLOCK,"锈蚀烈焰",EasyCodeRarity.蓝色,0.85),
-                CSGOItem.create(CSGOWeapons.NOVA,"灼木",EasyCodeRarity.蓝色,0.75),
-                CSGOItem.create(CSGOWeapons.M4A4,"镁元素",EasyCodeRarity.蓝色),
-                CSGOItem.create(CSGOWeapons.SAWED_OFF,"黑砂",EasyCodeRarity.蓝色,0.9),
-                CSGOItem.create(CSGOWeapons.SG553,"危险距离",EasyCodeRarity.蓝色,0.02,0.8),
-                CSGOItem.create(CSGOWeapons.TEC9,"废铜烂铁",EasyCodeRarity.蓝色,0.14,1),
+                CSGOItem.create(CSGOWeapons.MP9,"中度威胁",Rarity.Rare,0.75),
+                CSGOItem.create(CSGOWeapons.GLOCK,"锈蚀烈焰",Rarity.Rare,0.85),
+                CSGOItem.create(CSGOWeapons.NOVA,"灼木",Rarity.Rare,0.75),
+                CSGOItem.create(CSGOWeapons.M4A4,"镁元素",Rarity.Rare),
+                CSGOItem.create(CSGOWeapons.SAWED_OFF,"黑砂",Rarity.Rare,0.9),
+                CSGOItem.create(CSGOWeapons.SG553,"危险距离",Rarity.Rare,0.02,0.8),
+                CSGOItem.create(CSGOWeapons.TEC9,"废铜烂铁",Rarity.Rare,0.14,1),
 
-                CSGOItem.create(CSGOWeapons.G3SG1,"净化者",EasyCodeRarity.紫色,0.65),
-                CSGOItem.create(CSGOWeapons.GRLIL,"信号灯",EasyCodeRarity.紫色,0.5),
-                CSGOItem.create(CSGOWeapons.MAC10,"销声",EasyCodeRarity.紫色,0.9),
-                CSGOItem.create(CSGOWeapons.P250,"影魔",EasyCodeRarity.紫色,0.4),
-                CSGOItem.create(CSGOWeapons.USP,"闪回",EasyCodeRarity.紫色,0.5),
+                CSGOItem.create(CSGOWeapons.G3SG1,"净化者",Rarity.Mythical,0.65),
+                CSGOItem.create(CSGOWeapons.GRLIL,"信号灯",Rarity.Mythical,0.5),
+                CSGOItem.create(CSGOWeapons.MAC10,"销声",Rarity.Mythical,0.9),
+                CSGOItem.create(CSGOWeapons.P250,"影魔",Rarity.Mythical,0.4),
+                CSGOItem.create(CSGOWeapons.USP,"闪回",Rarity.Mythical,0.5),
 
-                CSGOItem.create(CSGOWeapons.UMP45,"动量",EasyCodeRarity.粉色,0.5),
-                CSGOItem.create(CSGOWeapons.DEAGLE,"机械工业",EasyCodeRarity.粉色,0.6),
-                CSGOItem.create(CSGOWeapons.MP5,"磷光体",EasyCodeRarity.粉色,0.8),
+                CSGOItem.create(CSGOWeapons.UMP45,"动量",Rarity.Legendary,0.5),
+                CSGOItem.create(CSGOWeapons.DEAGLE,"机械工业",Rarity.Legendary,0.6),
+                CSGOItem.create(CSGOWeapons.MP5,"磷光体",Rarity.Legendary,0.8),
 
-                CSGOItem.create(CSGOWeapons.AK47,"二西莫夫",EasyCodeRarity.红色,0.05,0.7),
-                CSGOItem.create(CSGOWeapons.AWP,"黑色魅影",EasyCodeRarity.红色,0.5)
+                CSGOItem.create(CSGOWeapons.AK47,"二西莫夫",Rarity.Immortal,0.05,0.7),
+                CSGOItem.create(CSGOWeapons.AWP,"黑色魅影",Rarity.Immortal,0.5)
         ),
         OPERATION_RIPTIDE_CASE("激流大行动",
-                CSGOItem.create(CSGOWeapons.AUG,"瘟疫",EasyCodeRarity.蓝色,0.76),
-                CSGOItem.create(CSGOWeapons.DUAL_BERETTAS,"胶面花纹",EasyCodeRarity.蓝色),
-                CSGOItem.create(CSGOWeapons.G3SG1,"特训地图",EasyCodeRarity.蓝色,0.7),
-                CSGOItem.create(CSGOWeapons.MP7,"游击队",EasyCodeRarity.蓝色),
-                CSGOItem.create(CSGOWeapons.PP_BIZON,"特训手电",EasyCodeRarity.蓝色,0.77),
-                CSGOItem.create(CSGOWeapons.USP,"蓝莲花",EasyCodeRarity.蓝色,0.9),
-                CSGOItem.create(CSGOWeapons.XM1014,"狻猊",EasyCodeRarity.蓝色),
+                CSGOItem.create(CSGOWeapons.AUG,"瘟疫",Rarity.Rare,0.76),
+                CSGOItem.create(CSGOWeapons.DUAL_BERETTAS,"胶面花纹",Rarity.Rare),
+                CSGOItem.create(CSGOWeapons.G3SG1,"特训地图",Rarity.Rare,0.7),
+                CSGOItem.create(CSGOWeapons.MP7,"游击队",Rarity.Rare),
+                CSGOItem.create(CSGOWeapons.PP_BIZON,"特训手电",Rarity.Rare,0.77),
+                CSGOItem.create(CSGOWeapons.USP,"蓝莲花",Rarity.Rare,0.9),
+                CSGOItem.create(CSGOWeapons.XM1014,"狻猊",Rarity.Rare),
 
-                CSGOItem.create(CSGOWeapons.MAG7,"秘晶体",EasyCodeRarity.紫色,0.6),
-                CSGOItem.create(CSGOWeapons.FAMAS,"ZX81彩色",EasyCodeRarity.紫色),
-                CSGOItem.create(CSGOWeapons.FN57,"同步立场",EasyCodeRarity.紫色,0.41),
-                CSGOItem.create(CSGOWeapons.MP9,"富士山",EasyCodeRarity.紫色,0.55),
-                CSGOItem.create(CSGOWeapons.M4A4,"彼岸花",EasyCodeRarity.紫色),
+                CSGOItem.create(CSGOWeapons.MAG7,"秘晶体",Rarity.Mythical,0.6),
+                CSGOItem.create(CSGOWeapons.FAMAS,"ZX81彩色",Rarity.Mythical),
+                CSGOItem.create(CSGOWeapons.FN57,"同步立场",Rarity.Mythical,0.41),
+                CSGOItem.create(CSGOWeapons.MP9,"富士山",Rarity.Mythical,0.55),
+                CSGOItem.create(CSGOWeapons.M4A4,"彼岸花",Rarity.Mythical),
 
-                CSGOItem.create(CSGOWeapons.MAC10,"玩具盒子",EasyCodeRarity.粉色),
-                CSGOItem.create(CSGOWeapons.GLOCK,"零食派对",EasyCodeRarity.粉色),
-                CSGOItem.create(CSGOWeapons.SSG08,"速度激情",EasyCodeRarity.粉色,0.6),
+                CSGOItem.create(CSGOWeapons.MAC10,"玩具盒子",Rarity.Legendary),
+                CSGOItem.create(CSGOWeapons.GLOCK,"零食派对",Rarity.Legendary),
+                CSGOItem.create(CSGOWeapons.SSG08,"速度激情",Rarity.Legendary,0.6),
 
-                CSGOItem.create(CSGOWeapons.DEAGLE,"纵横波涛",EasyCodeRarity.红色),
-                CSGOItem.create(CSGOWeapons.AK47,"抽象派1337",EasyCodeRarity.红色,0.65)
+                CSGOItem.create(CSGOWeapons.DEAGLE,"纵横波涛",Rarity.Immortal),
+                CSGOItem.create(CSGOWeapons.AK47,"抽象派1337",Rarity.Immortal,0.65)
                 );
 
 
@@ -283,34 +271,6 @@ public class FakeCaseManager {
         @Override
         public String toString() {
             return realName;
-        }
-    }
-
-    /**
-     * Sorry for this, but IDE is so bad working for Rarity names.
-     */
-    public enum EasyCodeRarity {
-        白色(Rarity.Common),
-        淡蓝(Rarity.Uncommon),
-        蓝色(Rarity.Rare),
-        紫色(Rarity.Mythical),
-        粉色(Rarity.Legendary),
-        红色(Rarity.Immortal),
-        金色(Rarity.Contraband);
-
-
-        private final Rarity rarity;
-        EasyCodeRarity(Rarity rarity) {
-            this.rarity = rarity;
-        }
-
-        public Rarity getRarity() {
-            return rarity;
-        }
-
-        @Override
-        public String toString() {
-            return rarity.toString();
         }
     }
 

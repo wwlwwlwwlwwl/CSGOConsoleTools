@@ -60,7 +60,7 @@
           <component id="2d98b" class="javax.swing.JTextPane" binding="textPane">
             <constraints/>
             <properties>
-              <font swing-font="TextArea.font"/>
+              <font name="Sans Serif Collection" size="12" style="0"/>
               <text value="CustomRadio Code"/>
             </properties>
           </component>
@@ -76,7 +76,7 @@
           <component id="b14da" class="javax.swing.JTextPane" binding="resultPane">
             <constraints/>
             <properties>
-              <font swing-font="TextArea.font"/>
+              <font name="Sans Serif Collection" size="12" style="0"/>
               <text value="ResultPane"/>
             </properties>
           </component>

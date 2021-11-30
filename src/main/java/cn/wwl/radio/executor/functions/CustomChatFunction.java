@@ -23,7 +23,7 @@ public class CustomChatFunction implements ConsoleFunction {
     public void onExecuteFunction(List<String> parameter) {
         String s = parameter.get(0);
         if (s.equals("ClearChat")) {
-            SocketTransfer.getInstance().pushToConsole("say " + String.valueOf(TextMarker.换行.getCode()).repeat(20));
+            SocketTransfer.getInstance().pushToConsole("say " + String.valueOf(TextMarker.Wrap.getCode()).repeat(20));
             return;
         }
 

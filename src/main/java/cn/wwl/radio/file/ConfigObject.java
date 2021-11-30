@@ -14,7 +14,7 @@ public class ConfigObject {
     private String musicSource = "Netease";
     private boolean lobbyMusic = true;
     private String gamePath = "NULL";
-    private List<TextMarker> randomColors = TextMarker.availableColors();
+    private String previousName = "NULL";
     private Map<String, String> autoReplaceCommand = new HashMap<>();
 
     private List<ModuleObject> moduleList = new ArrayList<>(List.of(ModuleObject.getTemplate()));
@@ -25,10 +25,6 @@ public class ConfigObject {
 
     public List<ModuleObject> getModuleList() {
         return moduleList;
-    }
-
-    public List<TextMarker> getRandomColors() {
-        return randomColors;
     }
 
     public Map<String, String> getAutoReplaceCommand() {
@@ -109,6 +105,15 @@ public class ConfigObject {
 
     public ConfigObject setGamePath(String gamePath) {
         this.gamePath = gamePath;
+        return this;
+    }
+
+    public String getPreviousName() {
+        return previousName;
+    }
+
+    public ConfigObject setPreviousName(String previousName) {
+        this.previousName = previousName;
         return this;
     }
 

@@ -1,16 +1,15 @@
 package cn.wwl.radio.console.impl.gui;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.utils.TextMarker;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -154,7 +153,7 @@ public class RadioPreviewPanel {
                 renderPreviewPanelBlock(list);
 
                 try {
-                    document.insertString(document.getLength(), "\r\n===============OR===============\r\n", ATTRIBUTE_MAP.get(TextMarker.白色));
+                    document.insertString(document.getLength(), "\r\n===============OR===============\r\n", ATTRIBUTE_MAP.get(TextMarker.White));
                 } catch (Exception e) {
                     ConsoleManager.getConsole().printError("Try insert Code Block Throw Exception!");
                 }
@@ -196,18 +195,20 @@ public class RadioPreviewPanel {
         }
 
         try {
-            TextMarker previusTextmarker = TextMarker.淡蓝色;
-            document.insertString(document.getLength(), "Yourname @ ", ATTRIBUTE_MAP.get(previusTextmarker));
-            document.insertString(document.getLength(), "反恐精英出生点 ", ATTRIBUTE_MAP.get(TextMarker.浅绿色));
+            TextMarker previusTextmarker = TextMarker.LightBlue;
+            String configName = ConfigLoader.getConfigObject().getPreviousName();
+            String name = configName.equals("NULL") ? "YourName" : configName;
+            document.insertString(document.getLength(), name + " @ ", ATTRIBUTE_MAP.get(previusTextmarker));
+            document.insertString(document.getLength(), "反恐精英出生点 ", ATTRIBUTE_MAP.get(TextMarker.LowGreen));
             document.insertString(document.getLength(), "(无线电) ： ", ATTRIBUTE_MAP.get(previusTextmarker));
             for (String s : stringList) {
                 TextMarker humanCode = TextMarker.getAsHumanCode(s);
                 if (humanCode != null) {
-                    if (humanCode == TextMarker.换行) {
-                        document.insertString(document.getLength(), "\n", ATTRIBUTE_MAP.get(TextMarker.白色));
+                    if (humanCode == TextMarker.Wrap) {
+                        document.insertString(document.getLength(), "\n", ATTRIBUTE_MAP.get(TextMarker.White));
                         continue;
                     }
-                    if (humanCode == TextMarker.随机颜色) {
+                    if (humanCode == TextMarker.Random) {
                         previusTextmarker = TextMarker.getRandomColor();
 //                        document.insertString(document.getLength(), "", ATTRIBUTE_MAP.get(TextMarker.白色));
                         continue;
@@ -230,8 +231,8 @@ public class RadioPreviewPanel {
         for (TextMarker color : availableColors) {
             addTextMarkerButton(color, null, null, colorSize);
         }
-        addTextMarkerButton(TextMarker.随机颜色, "随机", BACKGROUND_COLOR, textSize);
-        addTextMarkerButton(TextMarker.换行, "换行", BACKGROUND_COLOR, textSize);
+        addTextMarkerButton(TextMarker.Random, "随机", BACKGROUND_COLOR, textSize);
+        addTextMarkerButton(TextMarker.Wrap, "换行", BACKGROUND_COLOR, textSize);
     }
 
     private void addTextMarkerButton(TextMarker color, String text, Color showColor, Dimension size) {
@@ -297,17 +298,39 @@ public class RadioPreviewPanel {
         textPanel = new JScrollPane();
         mainPanel.add(textPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         textPane = new JTextPane();
-        Font textPaneFont = UIManager.getFont("TextArea.font");
+        Font textPaneFont = this.$$$getFont$$$("Sans Serif Collection", Font.PLAIN, 12, textPane.getFont());
         if (textPaneFont != null) textPane.setFont(textPaneFont);
         textPane.setText("CustomRadio Code");
         textPanel.setViewportView(textPane);
         resultPanel = new JScrollPane();
         mainPanel.add(resultPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         resultPane = new JTextPane();
-        Font resultPaneFont = UIManager.getFont("TextArea.font");
+        Font resultPaneFont = this.$$$getFont$$$("Sans Serif Collection", Font.PLAIN, 12, resultPane.getFont());
         if (resultPaneFont != null) resultPane.setFont(resultPaneFont);
         resultPane.setText("ResultPane");
         resultPanel.setViewportView(resultPane);
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        Font font = new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
+        boolean isMac = System.getProperty("os.name", "").toLowerCase(Locale.ENGLISH).startsWith("mac");
+        Font fontWithFallback = isMac ? new Font(font.getFamily(), font.getStyle(), font.getSize()) : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
+        return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
     }
 
     /**

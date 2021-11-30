@@ -20,15 +20,24 @@ public class SoxSoundUtils {
     private static final List<File> CACHED_MUSICS = new ArrayList<>();
     private static File soxExecuteFile = null;
 
+    /**
+     * Use SoX Format the Music to Game Readable Format, and Put music to cached list.
+     * @param music Not cached Music
+     */
     public static void cacheMusic(File music) {
-        cacheMusic(music,CACHED_MUSICS);
+        cacheMusic(music,CACHED_MUSICS::add);
     }
 
-    public static void cacheMusic(File music,List<File> cache) {
+    /**
+     * Use SoX Format the Music to Game Readable Format, and Call the callback.
+     * @param music Not cached Music
+     * @param callback Music callback, Variable is Cached Music.
+     */
+    public static void cacheMusic(File music,cacheMusicCallback callback) {
         File saveDir = new File(CACHE_DIR,  splitSuffix(music.getName()) + ".wav");
         if (saveDir.exists()) {
             ConsoleManager.getConsole().printToConsole("Music " + saveDir.getName() + " Already cached. use cache.");
-            cache.add(saveDir);
+            callback.handle(saveDir);
             return;
         }
         ConsoleManager.getConsole().printToConsole("Start cache Music: " + music.getName());
@@ -41,11 +50,12 @@ public class SoxSoundUtils {
                         saveDir.getAbsolutePath() +
                         "\"";
                 //sox.exe music.mp3 -r 22050 -c 1 -b 16 --multi-threaded -V1 voice_input.wav
+                System.out.println("Debug: SoxCommandLine[" + cmdLine + "]");
                 Process process = Runtime.getRuntime().exec(cmdLine);
 
                 int exitCode = process.waitFor();
                 if (exitCode == 0) {
-                    cache.add(saveDir);
+                    callback.handle(saveDir);
                     ConsoleManager.getConsole().printToConsole("Music " + saveDir.getName() + " Cache done.");
                 } else {
                     ConsoleManager.getConsole().printError("Music " + saveDir.getName() + " Cache Return Code == " + exitCode + "! Cache Failed!");
@@ -82,6 +92,11 @@ public class SoxSoundUtils {
         }
     }
 
+    /**
+     * Get the File name, Removed Suffix
+     * @param name File name
+     * @return File name Without Suffix
+     */
     public static String splitSuffix(String name) {
         if (!name.contains(".")) {
             return name;
@@ -175,5 +190,9 @@ public class SoxSoundUtils {
         zipInputStream.closeEntry();
         zipInputStream.close();
         ConsoleManager.getConsole().printToConsole("Unzip done.");
+    }
+
+    public interface cacheMusicCallback {
+        void handle(File cachedMusic);
     }
 }

@@ -25,6 +25,10 @@ public class ConsoleListener implements Runnable {
         tasks.put(name, listener);
     }
 
+    public boolean haveListener(String name) {
+        return tasks.containsKey(name);
+    }
+
     private int discCount = 0;
 
     @Override

@@ -39,7 +39,7 @@ public class FunctionExecutor {
             return;
         }
 
-        String func = removeUnknownHead(cmd);
+        String func = removeUnknownCommandTag(cmd);
 
         if (!modules.containsKey(func)) {
             if (func.contains(prefix)) {
@@ -69,7 +69,12 @@ public class FunctionExecutor {
         function.onHookSpecialMessage(message);
     }
 
-    public static String removeUnknownHead(String cmd) {
+    /**
+     * Remove the "Unknown command : ***" tags
+     * @param cmd message
+     * @return message without "Unknown ***"
+     */
+    public static String removeUnknownCommandTag(String cmd) {
         if (cmd.startsWith("Unknown")) {
             /*两种输出方式:
             1. 主菜单 : Unknown command "hello"
@@ -163,7 +168,7 @@ public class FunctionExecutor {
                 return;
             }
 
-            String unknownHead = removeUnknownHead(str);
+            String unknownHead = removeUnknownCommandTag(str);
             String newCommand = commandReplace(unknownHead);
             if (!unknownHead.equalsIgnoreCase(newCommand)) { //处理自定义替换的字符串
                 SocketTransfer.getInstance().echoToConsole("Cmd [" + str + "] has been Replace to [" + newCommand + "] .");
