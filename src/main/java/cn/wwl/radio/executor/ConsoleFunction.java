@@ -55,4 +55,10 @@ public interface ConsoleFunction {
      * @param content 玩家聊天的内容
      */
     default void onHookPlayerChat(String name,String content) {}
+
+    /**
+     * 当游戏结束但是没有结束控制台,游戏再次重开时调用
+     * 用于重新注册一些钩子
+     */
+    default void onApplicationReboot() {}
 }

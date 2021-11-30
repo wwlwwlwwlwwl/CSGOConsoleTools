@@ -109,6 +109,10 @@ public class FunctionExecutor {
         RadioFileManager.getInstance();
     }
 
+    public static void callRebootHook() {
+        functions.forEach((s,f) -> f.onApplicationReboot());
+    }
+
     private static void registerMessageHook() {
         if (isRegistered) {
             return;

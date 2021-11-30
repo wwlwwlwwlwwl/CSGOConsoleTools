@@ -111,6 +111,8 @@ public class SocketTransfer {
             FunctionExecutor.registerGameHook();
             SocketConsole.createRemoteListener();
             ConsoleManager.getConsole().startConsole();
+        } else {
+            FunctionExecutor.callRebootHook();
         }
     }
 

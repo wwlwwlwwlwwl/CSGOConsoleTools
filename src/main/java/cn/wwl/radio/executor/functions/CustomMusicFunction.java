@@ -535,12 +535,21 @@ public class CustomMusicFunction implements ConsoleFunction {
             return;
         }
         isHookedMusicCommand = true;
+        registerCommandHook();
+//        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
+        JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
+    }
+
+    private void registerCommandHook() {
         SocketTransfer.getInstance().pushToConsole("alias music_play \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
         SocketTransfer.getInstance().pushToConsole("alias music_pause \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPause\"");
         SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicStop\"");
         SocketTransfer.getInstance().pushToConsole("status");
-//        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
-        JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
+    }
+
+    @Override
+    public void onApplicationReboot() {
+        registerCommandHook();
     }
 
     private void cacheLobbyMusic() {
