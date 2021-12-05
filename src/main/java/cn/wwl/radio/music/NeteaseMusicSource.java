@@ -21,7 +21,7 @@ public class NeteaseMusicSource implements MusicSource {
     //https://api.music.imsyy.top/
     //https://v2.alapi.cn/api/music 需要API_KEY
     private static final String API_LINK = "https://netease.wwlwwl.xyz";
-    private static final String API_TOKEN = ConfigLoader.getConfigObject().getAPIToken();
+//    private static final String API_TOKEN = ConfigLoader.getConfigObject().getAPIToken();
     private static final String RANDOM_IP = "60.213.165." + new Random().nextInt(255);
 
     @Override

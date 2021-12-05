@@ -184,7 +184,7 @@ public class SettingsPanel {
         }
 
         switch (selectedItem) {
-            case "Config" -> ConfigLoader.writeConfigObject();
+            case "Config", "Modules" -> ConfigLoader.writeConfigObject();
             case "Radio" -> RadioFileManager.getInstance().saveRadioConfig();
         }
         notificationText.setText("Config Saved.");
@@ -643,6 +643,7 @@ public class SettingsPanel {
                     result = new StringBuilder(substring);
                 }
 
+                System.out.println("Debug: " + result);
                 previewPanel.configureRadio(result.toString(), (str) -> {
                     frame.setEnabled(true);
                     if (str == null) {
@@ -669,7 +670,6 @@ public class SettingsPanel {
                     }
 
                     moduleObject.setParameter(list);
-                    System.out.println("Parameter: " + parameter);
                     p.set(generationStringParameter(moduleObject));
                     plabel.setText("Parameter: " + (
                             p.get().length() == 0 ?

@@ -10,7 +10,7 @@ public class ConfigObject {
     private int gamePort = 10090;
     private int remoteConsolePort = 29999;
     private boolean musicNetworkSearch = true;
-    private String APIToken = "None";
+//    private String APIToken = "None";
     private String musicSource = "Netease";
     private boolean lobbyMusic = true;
     private String gamePath = "NULL";
@@ -47,9 +47,9 @@ public class ConfigObject {
         return musicSource;
     }
 
-    public String getAPIToken() {
-        return APIToken;
-    }
+//    public String getAPIToken() {
+//        return APIToken;
+//    }
 
     public boolean isMusicNetworkSearch() {
         return musicNetworkSearch;
@@ -84,10 +84,10 @@ public class ConfigObject {
         return this;
     }
 
-    public ConfigObject setAPIToken(String APIToken) {
-        this.APIToken = APIToken;
-        return this;
-    }
+//    public ConfigObject setAPIToken(String APIToken) {
+//        this.APIToken = APIToken;
+//        return this;
+//    }
 
     public ConfigObject setMusicSource(String musicSource) {
         this.musicSource = musicSource;

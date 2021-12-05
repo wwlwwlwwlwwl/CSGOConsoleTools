@@ -32,6 +32,10 @@ public class CustomChatFunction implements ConsoleFunction {
             s = parameter.get(random.nextInt(parameter.size() - 1));
         }
 
+        if (s.contains(TextMarker.Wrap.getHumanCode())) {
+            s = s.replace(TextMarker.Wrap.getHumanCode(), TextMarker.Wrap.getCode());
+        }
+
         SocketTransfer.getInstance().pushToConsole("say " + s);
     }
 }

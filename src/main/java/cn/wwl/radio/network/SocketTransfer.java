@@ -216,15 +216,16 @@ public class SocketTransfer {
         listener.addListener(name, task);
     }
 
+    private boolean isRegisterTask = false;
     /**
      * 获取玩家当前的ID
      * @Warning 在获取到ID之前可能无法拿到准确的用户名称
-     * @return 玩家的ID, 在获取到之前会返回null
+     * @return 玩家的ID, 在获取到之前会返回之前的玩家ID
      */
     public String getPlayerName() {
-        String taskName = "GetPlayerName";
-        if (!listener.haveListener(taskName)) {
-            addListenerTask(taskName, message -> {
+        if (!isRegisterTask) {
+            isRegisterTask = true;
+            addListenerTask("GetPlayerName", message -> {
                 if (message.contains("\"name\" = ") && message.contains("unnamed")) {
                     String name = message.substring(10, message.indexOf("\" ( def. \"unnamed\" )"));
                     String previousName = ConfigLoader.getConfigObject().getPreviousName();
