@@ -105,7 +105,6 @@ public class FunctionExecutor {
             startTickThread();
         }
 
-        SteamUtils.initCSGODir();
         RadioFileManager.getInstance();
     }
 

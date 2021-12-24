@@ -226,6 +226,17 @@ public class SettingsPanel {
                 RADIO_PANEL.setVisible(true);
             }
         }
+        updateWindowSize(val);
+    }
+
+    private void updateWindowSize(String label) {
+        switch (label) {
+            case "Config" -> {
+                int sizeCount = (strClass.size() + intClass.size() + boolClass.size());
+                int h = (sizeCount * 25) + 450;
+                frame.setSize(new Dimension(frame.getWidth(), h));
+            }
+        }
     }
 
     private void initRadioSelectionPanel() {
@@ -712,6 +723,7 @@ public class SettingsPanel {
 
     private void initConfigValues() {
         ConfigObject configObject = ConfigLoader.getConfigObject();
+        Dimension boxSize = new Dimension(100, 25);
         if (strClass.isEmpty() || intClass.isEmpty() || boolClass.isEmpty()) {
             List<Field> fields = Arrays.stream(ConfigObject.class.getDeclaredFields())
                     .filter(field -> !field.getAnnotatedType().getType().getTypeName().contains("List"))
@@ -768,9 +780,8 @@ public class SettingsPanel {
                 textField.setText((String) f.get(configObject));
                 textField.setEnabled(true);
                 setSkin(textField);
-                Dimension dimension = new Dimension(100, 25);
-                textField.setMinimumSize(dimension);
-                textField.setPreferredSize(dimension);
+                textField.setMinimumSize(boxSize);
+                textField.setPreferredSize(boxSize);
 
                 textField.addKeyListener(new KeyAdapter() {
                     @Override
@@ -804,9 +815,8 @@ public class SettingsPanel {
                 spinner.setValue(f.get(configObject));
                 spinner.setEnabled(true);
                 setSkin(spinner);
-                Dimension dimension = new Dimension(100, 25);
-                spinner.setMinimumSize(dimension);
-                spinner.setPreferredSize(dimension);
+                spinner.setMinimumSize(boxSize);
+                spinner.setPreferredSize(boxSize);
 
                 spinner.addChangeListener(e -> {
                     int value = (Integer) spinner.getValue();

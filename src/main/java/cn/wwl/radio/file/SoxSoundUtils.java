@@ -50,7 +50,6 @@ public class SoxSoundUtils {
                         saveDir.getAbsolutePath() +
                         "\"";
                 //sox.exe music.mp3 -r 22050 -c 1 -b 16 --multi-threaded -V1 voice_input.wav
-                System.out.println("Debug: SoxCommandLine[" + cmdLine + "]");
                 Process process = Runtime.getRuntime().exec(cmdLine);
 
                 int exitCode = process.waitFor();

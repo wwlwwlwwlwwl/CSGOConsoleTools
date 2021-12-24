@@ -16,9 +16,9 @@ public class SteamUtils {
         return csgoPath;
     }
 
-    public static synchronized boolean initCSGODir() {
+    private static void initCSGODir() {
         if (csgoPath != null) {
-            return true;
+            return;
         }
         ConfigObject configObject = ConfigLoader.getConfigObject();
         if (!configObject.getGamePath().equals("NULL")) {
@@ -27,20 +27,19 @@ public class SteamUtils {
                 ConsoleManager.getConsole().printError("Wrong Exist CSGOLocation!");
             } else {
                 ConsoleManager.getConsole().printToConsole("Using Exist CSGOLocation: " + csgoPath.getAbsolutePath());
-                return true;
+                return;
             }
         }
 
         String csgoLocation = SteamUtils.getFileLocation("csgo.exe").replace("csgo.exe","");
         if (csgoLocation.equals("")) {
             ConsoleManager.getConsole().printError("Get CSGO Path failed!");
-            return false;
+            return;
         }
 
         csgoPath = new File(csgoLocation);
         configObject.setGamePath(csgoLocation);
         ConfigLoader.writeConfigObject();
-        return true;
     }
 
     public static void patchCSGOLaunchLine() {

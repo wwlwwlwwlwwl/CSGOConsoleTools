@@ -36,13 +36,14 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static boolean cacheFailed = false;
     private static boolean isAllowPlayMusic;
     private static boolean isHookedMusicCommand = false;
+    private static boolean isForceUnlock = false;
 
     //在控制台出现flare的时候肯定是结算界面 但是同时也会出现globe 而这时候玩家可能还没有退出游戏 所以写一个定时器在获取到flare之后暂时禁用globe的获取
     private static boolean disableGlobe = false;
 
     private static boolean isEnableSearch = true;
-    private static boolean isLocalVersion = !ConfigLoader.getConfigObject().isMusicNetworkSearch();
-    private static boolean enableLobbyMusic = ConfigLoader.getConfigObject().isLobbyMusic();
+    private static final boolean isLocalVersion = !ConfigLoader.getConfigObject().isMusicNetworkSearch();
+    private static final boolean enableLobbyMusic = ConfigLoader.getConfigObject().isLobbyMusic();
     private static List<MusicResult> previousResult = new ArrayList<>();
     private static final List<File> lobbyMusics = new ArrayList<>();
     private static final List<File> playedMusics = new ArrayList<>();
@@ -172,6 +173,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                             if (!isAllowPlayMusic) {
                                 ConsoleManager.getConsole().printToConsole("ForceUnlock lobbyMusic");
                                 SocketTransfer.getInstance().echoToConsole("Force Unlocking LobbyMusic...");
+                                isForceUnlock = true;
                                 isAllowPlayMusic = true;
                                 player = null;
                             }
@@ -188,6 +190,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                         case "MusicStop" -> {
                             ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
                             SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
+                            isForceUnlock = false;
                             isAllowPlayMusic = false;
                             stopLobbyMusic();
                         }
@@ -405,7 +408,7 @@ public class CustomMusicFunction implements ConsoleFunction {
         }
 
         if (!isAllowPlayMusic) {
-            if (player != null) {
+            if (player != null && !isForceUnlock) {
                 stopLobbyMusic();
             }
             return;
@@ -542,6 +545,7 @@ public class CustomMusicFunction implements ConsoleFunction {
 
     private void registerCommandHook() {
         SocketTransfer.getInstance().pushToConsole("alias music_play \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
+        SocketTransfer.getInstance().pushToConsole("alias music_start \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
         SocketTransfer.getInstance().pushToConsole("alias music_pause \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPause\"");
         SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicStop\"");
         SocketTransfer.getInstance().pushToConsole("status");
@@ -639,10 +643,8 @@ public class CustomMusicFunction implements ConsoleFunction {
         ConsoleManager.getConsole().printToConsole("Start init CustomMusic function...");
 
         if (SteamUtils.getCsgoPath() == null) {
-            if (!SteamUtils.initCSGODir()) {
-                isBootFailed = true;
-                return;
-            }
+            isBootFailed = true;
+            return;
         }
 
         if (!SoxSoundUtils.initSox(SteamUtils.getCsgoPath())) {

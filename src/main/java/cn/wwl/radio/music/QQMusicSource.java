@@ -22,10 +22,9 @@ public class QQMusicSource implements MusicSource {
 
     private static final String API_LINK = "https://api.zsfmyz.top/music";
     //这个API的证书过期了 但是找不到靠谱的了 暂时忽略证书使用
-    private static SSLSocketFactory sslSocketFactory;
+    private static final SSLSocketFactory sslSocketFactory = getSSLSocketFactory();
 
     public static SSLSocketFactory getSSLSocketFactory() {
-        if (sslSocketFactory == null) {
             try {
                 SSLContext context = SSLContext.getInstance("TLS");
                 context.init(null,
@@ -42,11 +41,9 @@ public class QQMusicSource implements MusicSource {
                             }
                         }},
                         new SecureRandom());
-                sslSocketFactory = context.getSocketFactory();
+                return context.getSocketFactory();
             } catch (NoSuchAlgorithmException | KeyManagementException ignored) {}
-        }
-
-        return sslSocketFactory;
+            return null;
     }
 
     @Override
@@ -62,7 +59,7 @@ public class QQMusicSource implements MusicSource {
                     .followRedirects(true)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.44")
                     .maxBodySize(Integer.MAX_VALUE)
-                    .sslSocketFactory(getSSLSocketFactory())
+                    .sslSocketFactory(sslSocketFactory)
                     .data(
                             "p", "1",
                             "w", name,
@@ -85,7 +82,7 @@ public class QQMusicSource implements MusicSource {
                     .ignoreHttpErrors(true)
                     .followRedirects(true)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.44")
-                    .sslSocketFactory(getSSLSocketFactory())
+                    .sslSocketFactory(sslSocketFactory)
                     .maxBodySize(Integer.MAX_VALUE)
                     .data(
                             "songmid", result.getData(),

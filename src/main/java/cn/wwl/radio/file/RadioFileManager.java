@@ -172,7 +172,7 @@ public class RadioFileManager {
 
     public void saveRadioConfig() {
         try {
-            System.out.println("Save Radio Config.");
+            ConsoleManager.getConsole().printToConsole("Save Radio Config.");
             ConfigLoader.writeFile(root.toVDFConfig(), radioFile);
         } catch (IOException e) {
             ConsoleManager.getConsole().printError("Try save Radio config Throw Exception!");
