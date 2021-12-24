@@ -1,7 +1,5 @@
 package cn.wwl.radio.utils;
 
-import cn.wwl.radio.file.ConfigLoader;
-
 import java.awt.*;
 import java.util.List;
 import java.util.Random;

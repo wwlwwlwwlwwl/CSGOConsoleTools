@@ -137,7 +137,6 @@ public class SteamUtils {
      */
     private static void patchLocalConfig(File userConfig) throws Exception {
         int startLine = -1;
-        int endLine = -1;
         int count = 1;
         int launchLine = -1;
         boolean startMatch = false;
@@ -203,12 +202,10 @@ public class SteamUtils {
                     count--;
                     if (findCSGO) {
                         if (count == 1) {
-                            findCSGO = false;
                             break;
                         }
                     }
                     if (count <= 0) {
-                        endLine = i;
                         break;
                     }
                 }

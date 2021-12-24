@@ -47,7 +47,7 @@ public class SettingsPanel {
     private static final JPanel MODULE_DETAIL_PANEL = new JPanel();
     private static final JPanel RADIO_DETAIL_PANEL = new JPanel();
 
-    private static JComboBox<String> radioGroupSelect = new JComboBox<>();
+    private static final JComboBox<String> radioGroupSelect = new JComboBox<>();
 
 
     public static final List<String> DEFAULT_RADIO = List.of(
@@ -527,17 +527,17 @@ public class SettingsPanel {
 
         MODULE_DETAIL_PANEL.removeAll();
         MODULE_DETAIL_PANEL.repaint();
-        renderModuleDetails(MODULE_DETAIL_PANEL, targetModule);
+        renderModuleDetails(targetModule);
         MODULE_DETAIL_PANEL.revalidate();
     }
 
-    private void renderModuleDetails(JPanel panel, ConfigObject.ModuleObject moduleObject) {
+    private void renderModuleDetails(ConfigObject.ModuleObject moduleObject) {
         JCheckBox enable = new JCheckBox();
         enable.setText("Enable");
         enable.setSelected(moduleObject.isEnabled());
         setSkin(enable);
         enable.addActionListener(e -> moduleObject.setEnabled(enable.isSelected()));
-        panel.add(enable);
+        MODULE_DETAIL_PANEL.add(enable);
 
         List<Field> strFields = Arrays.stream(moduleObject.getClass().getDeclaredFields())
                 .filter(f -> String.class.equals(f.getAnnotatedType().getType()))
@@ -571,8 +571,8 @@ public class SettingsPanel {
                             ex.printStackTrace();
                         }
                     });
-                    panel.add(label);
-                    panel.add(comboBox);
+                    MODULE_DETAIL_PANEL.add(label);
+                    MODULE_DETAIL_PANEL.add(comboBox);
                 } catch (Exception e) {
                     ConsoleManager.getConsole().printError("Try put Module " + moduleObject.getName() + " Value Parameter SelectBox Throw Exception!");
                     ConsoleManager.getConsole().printException(e);
@@ -607,8 +607,8 @@ public class SettingsPanel {
                         }
                     }
                 });
-                panel.add(label);
-                panel.add(textField);
+                MODULE_DETAIL_PANEL.add(label);
+                MODULE_DETAIL_PANEL.add(textField);
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Try render Module " + moduleObject.getName() + " Value " + strField.getName() + " Throw Exception!");
                 ConsoleManager.getConsole().printException(e);
@@ -625,7 +625,7 @@ public class SettingsPanel {
                         (p.get().length() > 50 ? p.get().substring(0, 50) + "..." : p)
         ));
         setSkin(plabel);
-        panel.add(plabel);
+        MODULE_DETAIL_PANEL.add(plabel);
 
         JButton parameterSettingButton = new JButton();
         parameterSettingButton.setEnabled(true);
@@ -714,7 +714,7 @@ public class SettingsPanel {
 //                plabel.repaint();
             }
         });
-        panel.add(parameterSettingButton);
+        MODULE_DETAIL_PANEL.add(parameterSettingButton);
     }
 
     private String generationStringParameter(ConfigObject.ModuleObject object) {

@@ -6,12 +6,11 @@ import java.util.TimerTask;
 public class TimerUtils {
     private static final Timer timer = new Timer();
 
-    public static TimerTask callMeLater(long ms, TimerTask callWhat) {
+    public static void callMeLater(long ms, TimerTask callWhat) {
         timer.schedule(callWhat,ms);
-        return callWhat;
     }
 
-    public static TimerTask callMeLater(long ms, TimerCallTask callWhat) {
+    public static void callMeLater(long ms, TimerCallTask callWhat) {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -19,7 +18,6 @@ public class TimerUtils {
             }
         };
         timer.schedule(task,ms);
-        return task;
     }
 
     public interface TimerCallTask {

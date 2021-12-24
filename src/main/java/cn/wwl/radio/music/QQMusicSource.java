@@ -42,8 +42,11 @@ public class QQMusicSource implements MusicSource {
                         }},
                         new SecureRandom());
                 return context.getSocketFactory();
-            } catch (NoSuchAlgorithmException | KeyManagementException ignored) {}
-            return null;
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                ConsoleManager.getConsole().printError("Try create QQMusic SSLSocketFactory Throw Exception! This should not Happened!");
+                ConsoleManager.getConsole().printException(e);
+                return (SSLSocketFactory) SSLSocketFactory.getDefault();
+            }
     }
 
     @Override

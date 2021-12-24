@@ -92,24 +92,10 @@ public class FakeCaseManager {
         }
     }
 
-    public static class CSGOItem {
-        public static final CSGOItem KNIFE = create(CSGOWeapons.CUSTOM,"蝴蝶刀 (★) | 伽马多普勒",Rarity.Immortal ,0.08);
-        public static final CSGOItem ERROR = create(CSGOWeapons.CUSTOM,"参数有误",Rarity.Common);
-
-        private final CSGOWeapons weaponName;
-        private final String skinName;
-        private final Rarity rarity;
-        private final float minFloat;
-        private final float maxFloat;
-
-
-        public CSGOItem(CSGOWeapons weaponName,String skinName,Rarity rarity,float minFloat,float maxFloat) {
-            this.weaponName = weaponName;
-            this.skinName = skinName;
-            this.rarity = rarity;
-            this.minFloat = minFloat;
-            this.maxFloat = maxFloat;
-        }
+    public record CSGOItem(CSGOWeapons weaponName, String skinName,
+                           Rarity rarity, float minFloat, float maxFloat) {
+        public static final CSGOItem KNIFE = create(CSGOWeapons.CUSTOM, "蝴蝶刀 (★) | 伽马多普勒", Rarity.Immortal, 0.08);
+        public static final CSGOItem ERROR = create(CSGOWeapons.CUSTOM, "参数有误", Rarity.Common);
 
         public String getSkinName() {
             return skinName;
@@ -136,15 +122,15 @@ public class FakeCaseManager {
         }
 
         public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity) {
-            return new CSGOItem(weapons,skinName,rarity,0F,1F);
+            return new CSGOItem(weapons, skinName, rarity, 0F, 1F);
         }
 
-        public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity,double maxFloat) {
-            return new CSGOItem(weapons,skinName,rarity,0,(float)maxFloat);
+        public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity, double maxFloat) {
+            return new CSGOItem(weapons, skinName, rarity, 0, (float) maxFloat);
         }
 
-        public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity,double minFloat,double maxFloat) {
-            return new CSGOItem(weapons,skinName,rarity,(float)minFloat,(float)maxFloat);
+        public static CSGOItem create(CSGOWeapons weapons, String skinName, Rarity rarity, double minFloat, double maxFloat) {
+            return new CSGOItem(weapons, skinName, rarity, (float) minFloat, (float) maxFloat);
         }
     }
 
