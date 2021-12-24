@@ -105,6 +105,11 @@ public class SoxSoundUtils {
     }
 
     public static boolean initSox(File gamePath) {
+        if (gamePath == null) {
+            ConsoleManager.getConsole().printError("InitSox GamePath is Null!");
+            return false;
+        }
+
         initMusicDir();
         File soxPath = new File(gamePath,"sox");
         File soxZip = new File(gamePath, "sox.zip");
@@ -126,7 +131,6 @@ public class SoxSoundUtils {
                 return false;
             }
         }
-
         try {
             Process process = Runtime.getRuntime().exec(soxFile.getAbsolutePath() + " --version");
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));

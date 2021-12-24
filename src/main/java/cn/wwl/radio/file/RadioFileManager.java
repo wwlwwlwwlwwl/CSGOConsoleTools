@@ -27,6 +27,11 @@ public class RadioFileManager {
     private RadioFileManager() {init();}
 
     private void init() {
+        ConfigObject configObject = ConfigLoader.getConfigObject();
+        if (configObject.getGamePath().equals("NULL")) {
+            return;
+        }
+
         File csgoPath = SteamUtils.getCsgoPath();
         File uiPath = new File(csgoPath, "csgo/resource/ui");
         radioFile = new File(uiPath, "radiopanel.txt");
@@ -34,7 +39,7 @@ public class RadioFileManager {
 
         if (!radioFile.exists()) {
             ConsoleManager.getConsole().printError("Config CSGOLocation is Wrong! Relocate Game...");
-            ConfigLoader.getConfigObject().setGamePath("NULL");
+            configObject.setGamePath("NULL");
             ConfigLoader.writeConfigObject();
             return;
         }

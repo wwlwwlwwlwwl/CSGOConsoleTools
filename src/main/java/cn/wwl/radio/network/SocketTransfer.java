@@ -50,11 +50,16 @@ public class SocketTransfer {
         boolean connected = false;
         while (!connected) {
             try {
-//                System.out.println("Debug > Start connect try...");
+                // Linux版的游戏有Bug
+                // 1. 如果游戏刚启动就连接进去 游戏会直接崩溃
+                // 2. 如果连接的客户端超过一个 游戏会崩溃
+                // 所以这里的操作就是循环检查游戏端口是否占用 如果被占用则延迟几秒后连接
+
+                //TODO 只要他跟游戏Socket交互 游戏就崩溃 绝望了
                 this.socket = new Socket();
                 this.socket.connect(new InetSocketAddress(CONNECT_PORT));
 
-                if (!socket.isConnected() || socket.isClosed()) {
+                if (socket == null || !socket.isConnected() || socket.isClosed()) {
                     throw new IOException();
                 }
 
