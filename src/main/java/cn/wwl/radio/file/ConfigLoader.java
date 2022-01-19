@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -189,7 +190,7 @@ public class ConfigLoader {
         }
         try {
             List<String> strList = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
             reader.lines().forEach(strList::add);
             reader.close();
             return strList;
