@@ -7,11 +7,13 @@ import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.SoxSoundUtils;
 import cn.wwl.radio.file.SteamUtils;
+import cn.wwl.radio.music.BackgroundMusic;
 import cn.wwl.radio.music.MusicManager;
 import cn.wwl.radio.music.MusicResult;
 import cn.wwl.radio.music.MusicSource;
 import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TextMarker;
+import cn.wwl.radio.utils.TimerUtils;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.advanced.PausablePlayer;
 
@@ -31,12 +33,6 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static boolean isPlaying = false;
     private static boolean isBootFailed = false;
     private static boolean isInited = false;
-    private static boolean isPlayerPaused = false;
-
-    private static boolean cacheFailed = false;
-    private static boolean isAllowPlayMusic;
-    private static boolean isHookedMusicCommand = false;
-    private static boolean isForceUnlock = false;
 
     //在控制台出现flare的时候肯定是结算界面 但是同时也会出现globe 而这时候玩家可能还没有退出游戏 所以写一个定时器在获取到flare之后暂时禁用globe的获取
     private static boolean disableGlobe = false;
@@ -45,17 +41,19 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static final boolean isLocalVersion = !ConfigLoader.getConfigObject().isMusicNetworkSearch();
     private static final boolean enableLobbyMusic = ConfigLoader.getConfigObject().isLobbyMusic();
     private static List<MusicResult> previousResult = new ArrayList<>();
-    private static final List<File> lobbyMusics = new ArrayList<>();
-    private static final List<File> playedMusics = new ArrayList<>();
-    private static PausablePlayer player;
 
-    private static final String SELECT_COMMAND = "#select";
-    private static final String SEARCH_COMMAND = "#search";
-    private static final String PLAY_COMMAND = "#play";
-    private static final String STOP_COMMAND = "#stop";
+    public static final String SELECT_COMMAND = "#select";
+    public static final String SEARCH_COMMAND = "#search";
+    public static final String PLAY_COMMAND = "#play";
+    public static final String STOP_COMMAND = "#stop";
+    public static final String HELP_COMMAND = "#music";
+
+    public static final String LOBBY_START_COMMAND = "music_start";
+    public static final String LOBBY_PLAY_COMMAND = "music_play";
+    public static final String LOBBY_PAUSE_COMMAND = "music_pause";
+    public static final String LOBBY_STOP_COMMAND = "music_stop";
     private static final String LOBBY_MUSIC_WATCHER_HEAD = "LobbyMusicWatcher";
 
-    private static float volume = -20.0F;
     @Override
     public boolean isRequireTicking() {
         return true;
@@ -68,11 +66,13 @@ public class CustomMusicFunction implements ConsoleFunction {
 
     @Override
     public List<String> isHookSpecialMessage() {
-        return List.of(SELECT_COMMAND,"voicerecord","StopMusicPlaying",
+        return List.of("voicerecord","StopMusicPlaying",
                 // 游戏内自动播放音乐 钩子
                 "已连接","Not connected to server","materials","uniqueid","music", LOBBY_MUSIC_WATCHER_HEAD,
                 //控制台搜索音乐,选择音乐
-                SEARCH_COMMAND, STOP_COMMAND
+                SELECT_COMMAND, SEARCH_COMMAND, PLAY_COMMAND,
+                // 背景音乐控制
+                LOBBY_START_COMMAND, LOBBY_PLAY_COMMAND, LOBBY_PAUSE_COMMAND, LOBBY_STOP_COMMAND
         );
     }
 
@@ -85,10 +85,6 @@ public class CustomMusicFunction implements ConsoleFunction {
     public void onTick() {
         if (!isInited) {
             init();
-        }
-
-        if (enableLobbyMusic) {
-            playLobbyMusic();
         }
     }
 
@@ -107,7 +103,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                 SocketTransfer.getInstance().echoToConsole("SearchMusic is Enabled.");
                 isEnableSearch = true;
             }
-            SocketTransfer.getInstance().echoToConsole("Use command " + SEARCH_COMMAND + "_[name] In console to Search music.");
+            SocketTransfer.getInstance().echoToConsole("Use cmd " + SEARCH_COMMAND + "_[name] In console to Search music.");
             return;
         }
 
@@ -129,20 +125,19 @@ public class CustomMusicFunction implements ConsoleFunction {
     public void onHookSpecialMessage(String message) {
         if (ConfigLoader.getConfigObject().isLobbyMusic()) {
                 String playerName = SocketTransfer.getInstance().getPlayerName();
-
                 if ((playerName == null || message.contains(playerName)) && message.contains("已连接")) { //玩家连接入服务器后的文字
-                    isAllowPlayMusic = false;
+                    BackgroundMusic.stopBackgroundMusic(false);
                     disableGlobe = false;
                     return;
                 }
 
                 if (message.contains("Not connected to server")) { //Status 获取玩家不在服务器中
-                    isAllowPlayMusic = true;
+                    BackgroundMusic.playBackgroundMusic(false);
                     return;
                 }
 
                 if (message.contains("materials/panorama/images/ui_textures/flare.png")) { //获取资源失败 结束应该会有这个吧...
-                    isAllowPlayMusic = true;
+                    BackgroundMusic.playBackgroundMusic(false);
                     //只要出现结算 那么就一直忽略这个指令 直到玩家重新连接入新游戏为止
                     disableGlobe = true;
                     return;
@@ -156,43 +151,30 @@ public class CustomMusicFunction implements ConsoleFunction {
                 }
 
                 if (message.contains("# userid name uniqueid")) { //Status 玩家在游戏中
-                    isAllowPlayMusic = false;
+                    BackgroundMusic.stopBackgroundMusic(true);
                     return;
                 }
 
                 if (message.contains(LOBBY_MUSIC_WATCHER_HEAD)) {
                     String command = message.substring(LOBBY_MUSIC_WATCHER_HEAD.length() + 1).trim();
 //                System.out.println("Command: " + command);
-                    switch (command) {
-                        case "MusicPlay" -> {
-                            if (player != null && player.getPlayerStatus() == PausablePlayer.PAUSED) {
-                                ConsoleManager.getConsole().printToConsole("LobbyMusic Resume");
-                                SocketTransfer.getInstance().echoToConsole("LobbyMusic now Resume.");
-                                player.fadeResume();
+                    if (BackgroundMusic.isReady()) {
+                        switch (command) {
+                            case "MusicPlay" -> {
+                                ConsoleManager.getConsole().printToConsole("LobbyMusic Start");
+                                SocketTransfer.getInstance().echoToConsole("LobbyMusic now Start.");
+                                BackgroundMusic.playBackgroundMusic(false);
                             }
-                            if (!isAllowPlayMusic) {
-                                ConsoleManager.getConsole().printToConsole("ForceUnlock lobbyMusic");
-                                SocketTransfer.getInstance().echoToConsole("Force Unlocking LobbyMusic...");
-                                isForceUnlock = true;
-                                isAllowPlayMusic = true;
-                                player = null;
-                            }
-                            isPlayerPaused = false;
-                        }
-                        case "MusicPause" -> {
-                            if (player != null && player.getPlayerStatus() == PausablePlayer.PLAYING) {
+                            case "MusicPause" -> {
                                 ConsoleManager.getConsole().printToConsole("LobbyMusic Pause");
                                 SocketTransfer.getInstance().echoToConsole("LobbyMusic now Paused.");
-                                isPlayerPaused = true;
-                                pauseLobbyMusic();
+                                BackgroundMusic.pauseBackgroundMusic();
                             }
-                        }
-                        case "MusicStop" -> {
-                            ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
-                            SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
-                            isForceUnlock = false;
-                            isAllowPlayMusic = false;
-                            stopLobbyMusic();
+                            case "MusicStop" -> {
+                                ConsoleManager.getConsole().printToConsole("LobbyMusic Stop");
+                                SocketTransfer.getInstance().echoToConsole("LobbyMusic now Stopped.");
+                                BackgroundMusic.stopBackgroundMusic(false);
+                            }
                         }
                     }
                 }
@@ -219,8 +201,8 @@ public class CustomMusicFunction implements ConsoleFunction {
             message = FunctionExecutor.removeUnknownCommandTag(message).replace("_"," ");
             if (message.toLowerCase(Locale.ROOT).contains("music")) {
                 try {
-                    volume = Float.parseFloat(message.substring(5));
-                    player.fadeSetGain(volume);
+                    float volume = Float.parseFloat(message.substring(5));
+                    BackgroundMusic.setVolume(volume, true);
                     ConsoleManager.getConsole().printToConsole("Music volume Set to " + volume);
                     SocketTransfer.getInstance().echoToConsole("Music volume Set to " + volume);
                 } catch (Exception e) {
@@ -298,7 +280,9 @@ public class CustomMusicFunction implements ConsoleFunction {
     public void onHookPlayerChat(String name, String content) {
         if (!(content.startsWith(SEARCH_COMMAND) ||
                 content.startsWith(PLAY_COMMAND) ||
-                content.startsWith(STOP_COMMAND))) {
+                content.startsWith(STOP_COMMAND) ||
+                content.startsWith(SELECT_COMMAND) ||
+                content.startsWith(HELP_COMMAND))) {
             return;
         }
 
@@ -397,190 +381,16 @@ public class CustomMusicFunction implements ConsoleFunction {
         }
     }
 
-    private void playLobbyMusic() {
-        registerMusicHook();
-        if (lobbyMusics.isEmpty() && !cacheFailed) {
-            cacheLobbyMusic();
-        }
-
-        if (cacheFailed) {
-            return;
-        }
-
-        if (!isAllowPlayMusic) {
-            if (player != null && !isForceUnlock) {
-                stopLobbyMusic();
-            }
-            return;
-        }
-
-        if (player != null) {
-            if (isPlayerPaused) {
-                return;
-            }
-
-            switch (player.getPlayerStatus()) {
-                case PausablePlayer.FINISHED -> {
-                    player = null;
-                    startLobbyMusic();
-                }
-                case PausablePlayer.PAUSED -> player.fadeResume();
-                case PausablePlayer.NOTSTARTED -> {
-                    try {
-                        player.play();
-                    } catch (Exception e) {
-                        startLobbyMusic();
-                    }
-                }
-            }
-        } else {
-            startLobbyMusic();
-        }
-    }
-
-    public static void startLobbyMusic() {
-        ConsoleManager.getConsole().printToConsole("Start Lobby Music.");
-        Random random = new Random();
-        if (lobbyMusics.size() == playedMusics.size()) {
-            playedMusics.clear();
-        }
-        File music = null;
-        while (music == null) {
-            File tempMusic = lobbyMusics.get(random.nextInt(lobbyMusics.size() - 1));
-//            System.out.println("Random new Music: " + tempMusic.getName());
-             if (!playedMusics.contains(tempMusic)) {
-                 playedMusics.add(tempMusic);
-                 music = tempMusic;
-             }
-        }
-        try {
-            if (player != null) {
-                player.fadeExit();
-                player = null;
-            }
-            player = new PausablePlayer(new FileInputStream(music));
-            player.play();
-            SocketTransfer.getInstance().echoToConsole("Now playing Music: " + music.getName());
-            ConsoleManager.getConsole().printToConsole("Now playing Music: " + music.getName());
-            MinimizeTrayConsole.updatePopupMenu();
-        } catch (Exception e) {
-            ConsoleManager.getConsole().printException(e);
-        }
-    }
-
-    public static void stopLobbyMusic() {
-        stopLobbyMusic(true);
-    }
-
-    public static void stopLobbyMusic(boolean fade) {
-        if (player == null) {
-            return;
-        }
-
-        if (fade) {
-            player.fadeExit();
-        } else {
-            player.stop();
-            player.close();
-        }
-        player = null;
-        isAllowPlayMusic = false;
-        MinimizeTrayConsole.updatePopupMenu();
-    }
-
-    public static void pauseLobbyMusic() {
-        if (player == null) {
-            return;
-        }
-
-        if (player.getPlayerStatus() == PausablePlayer.PLAYING) {
-            player.fadePause();
-        } else if (player.getPlayerStatus() == PausablePlayer.PAUSED) {
-            player.fadeResume();
-        } else {
-            stopLobbyMusic();
-            startLobbyMusic();
-        }
-    }
-
-    public static void setLobbyMusicGain(float targetVolume,boolean fade) {
-        if (player == null) {
-            return;
-        }
-        volume = targetVolume;
-        if (fade) {
-            player.fadeSetGain(volume);
-        } else {
-            player.setGain(volume);
-        }
-    }
-
-    public static void setLobbyMusicGain(float targetVolume) {
-        setLobbyMusicGain(targetVolume,true);
-    }
-
-    public static float getLobbyMusicGain() {
-        if (player == null) {
-            return volume;
-        }
-        return player.getGain();
-    }
-
-    public static int getLobbyMusicStatus() {
-        if (player == null) {
-            return PausablePlayer.NOTINIT;
-        }
-        return player.getPlayerStatus();
-    }
-
-    private void registerMusicHook() {
-        if (isHookedMusicCommand) {
-            return;
-        }
-        isHookedMusicCommand = true;
-        registerCommandHook();
-//        SocketTransfer.getInstance().pushToConsole("alias music_random \"echo LobbyMusicWatcher_MusicRandom\"");
-        JavaSoundAudioDevice.listenEvent(e -> e.setVolume(volume));
-    }
-
     private void registerCommandHook() {
-        SocketTransfer.getInstance().pushToConsole("alias music_play \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
-        SocketTransfer.getInstance().pushToConsole("alias music_start \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
-        SocketTransfer.getInstance().pushToConsole("alias music_pause \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPause\"");
-        SocketTransfer.getInstance().pushToConsole("alias music_stop \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicStop\"");
-        SocketTransfer.getInstance().pushToConsole("status");
+        SocketTransfer.getInstance().pushToConsole("alias " + LOBBY_PLAY_COMMAND + " \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
+        SocketTransfer.getInstance().pushToConsole("alias " + LOBBY_START_COMMAND + " \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPlay\"");
+        SocketTransfer.getInstance().pushToConsole("alias " + LOBBY_PAUSE_COMMAND + " \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicPause\"");
+        SocketTransfer.getInstance().pushToConsole("alias " + LOBBY_STOP_COMMAND + " \"echo " + LOBBY_MUSIC_WATCHER_HEAD + "_MusicStop\"");
     }
 
     @Override
     public void onApplicationReboot() {
         registerCommandHook();
-    }
-
-    private void cacheLobbyMusic() {
-        File musicDir = SoxSoundUtils.getMusicDir();
-        File lobbyDir = new File(musicDir,"lobby");
-        if (!lobbyDir.exists()) {
-            if (!lobbyDir.mkdir()) {
-                ConsoleManager.getConsole().printError("Make lobbyMusic dir Failed!");
-                cacheFailed = true;
-                return;
-            }
-        }
-
-        File[] files = lobbyDir.listFiles();
-        if (files == null || files.length == 0) {
-            ConsoleManager.getConsole().printToConsole("LobbyMusic dir is Empty! Please place music In folder!");
-            cacheFailed = true;
-            return;
-        }
-
-        for (File file : files) {
-            if (!file.getName().endsWith(".mp3")) {
-                ConsoleManager.getConsole().printError("LobbyMusic " + file + " is Unknown Format! please Format to MP3!");
-                continue;
-            }
-            lobbyMusics.add(file);
-        }
     }
 
     private static void sayTeamMessage(String s) {
@@ -664,6 +474,10 @@ public class CustomMusicFunction implements ConsoleFunction {
 
         for (File music : musics) {
             SoxSoundUtils.cacheMusic(music);
+        }
+
+        if (enableLobbyMusic) {
+            registerCommandHook();
         }
     }
 }

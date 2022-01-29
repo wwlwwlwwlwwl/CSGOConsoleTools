@@ -8,6 +8,7 @@ import cn.wwl.radio.executor.FunctionExecutor;
 import cn.wwl.radio.executor.functions.CustomMusicFunction;
 import cn.wwl.radio.file.ConfigLoader;
 import cn.wwl.radio.file.SteamUtils;
+import cn.wwl.radio.music.BackgroundMusic;
 import cn.wwl.radio.network.task.ListenerTask;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -46,6 +47,13 @@ public class SocketTransfer {
         ConsoleManager.getConsole().printToConsole("Watching Port: " + CONNECT_PORT + ", Waiting Game start...");
         if (!isReboot) {
             SteamUtils.patchCSGOLaunchLine();
+        }
+        if (ConfigLoader.getConfigObject().isLobbyMusic()) {
+            BackgroundMusic.init();
+
+            if (ConfigLoader.getConfigObject().isUsingLauncher()) {
+                BackgroundMusic.playBackgroundMusic(false);
+            }
         }
         boolean connected = false;
         while (!connected) {
@@ -135,9 +143,11 @@ public class SocketTransfer {
     }
 
     public void shutdown(boolean echoShutdown) {
-        if (socket == null) {
+        if (socket == null || !socket.isConnected()) {
             System.exit(0);
+            return;
         }
+
         try {
             ConsoleManager.getConsole().printToConsole("Start Shutdown now...");
             if (echoShutdown) {
@@ -165,7 +175,9 @@ public class SocketTransfer {
                 case TrayMessageCallback.DOUBLE_CLICK -> SocketTransfer.getInstance().shutdown(false);
             }
         });
-        CustomMusicFunction.stopLobbyMusic(true);
+        if (!ConfigLoader.getConfigObject().isUsingLauncher()) {
+            BackgroundMusic.stopBackgroundMusic(false);
+        }
         ConsoleManager.getConsole().printToConsole("Start reboot Application...");
         isReboot = true;
         start();
@@ -204,6 +216,9 @@ public class SocketTransfer {
             echoToConsole("Module: " + module.getName() + ", Function: " + module.getFunction() + ", " + prefix + "_" + module.getCommand());
         });
         ConsoleManager.getConsole().printToConsole("Register commands done.");
+        if (ConfigLoader.getConfigObject().isLobbyMusic()) {
+            BackgroundMusic.playBackgroundMusic(false);
+        }
     }
 
     private void echoDisconnect() {
@@ -254,6 +269,10 @@ public class SocketTransfer {
         return socket;
     }
 
+    public boolean isConnected() {
+        return outputStream != null && (socket != null && socket.isConnected() && !socket.isClosed());
+    }
+
     public long getBootTimestamp() {
         return bootTimestamp;
     }
@@ -263,8 +282,8 @@ public class SocketTransfer {
      * @param command 要输出的命令
      */
     public void pushToConsole(String command) {
-        if (outputStream == null || (socket == null || !socket.isConnected() || socket.isClosed())) {
-            ConsoleManager.getConsole().printToConsole("Socket not connected!");
+        if (!isConnected()) {
+            ConsoleManager.getConsole().printToConsole("Send command: [" + command + "] To game failed! Socket not connected!");
             return;
         }
         try {

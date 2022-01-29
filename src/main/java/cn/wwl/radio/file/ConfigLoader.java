@@ -125,6 +125,9 @@ public class ConfigLoader {
         JsonObject jsonObject = element.getAsJsonObject();
         List<Field> updateFields = new ArrayList<>();
         for (Field field : fields) {
+            if (field.getName().startsWith("_")) {
+                continue;
+            }
             if (!jsonObject.has(field.getName())) {
                 ConsoleManager.getConsole().printToConsole("Config file not have Value : " + field.getName());
                 updateFields.add(field);

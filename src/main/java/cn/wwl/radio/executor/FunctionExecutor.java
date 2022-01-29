@@ -21,6 +21,7 @@ public class FunctionExecutor {
     private static boolean isStartTickThread = false;
     private static final Map<String, ConfigObject.ModuleObject> modules = new HashMap<>();
     private static final Map<String, ConsoleFunction> functions = new HashMap<>();
+    private static final Map<String, ConsoleFunction> messageHookMap = new HashMap<>();
     private static boolean isRegistered = false;
     public static final String HOOK_HEAD = "HookExecute";
 
@@ -30,15 +31,24 @@ public class FunctionExecutor {
             if (!cmd.contains(prefix)) {
                 return;
             }
-        } else if (cmd.startsWith(HOOK_HEAD)) {
-            if (cmd.contains(ConfigLoader.getConfigObject().getPrefix())) {
+        } else if (cmd.contains(ConfigLoader.getConfigObject().getPrefix()) || cmd.contains(HOOK_HEAD)) {
+            if (cmd.startsWith(HOOK_HEAD)) {
                 cmd = cmd.replace(ConfigLoader.getConfigObject().getPrefix() + "_", "");
+            } else {
+                String command = cmd.substring(prefix.length() + 1);
+                System.out.println("Internal Execution: " + command);
+                cmd = command;
             }
         } else {
             return;
         }
 
-        String func = removeUnknownCommandTag(cmd);
+        String func;
+        try {
+            func = removeUnknownCommandTag(cmd);
+        } catch (Exception e) {
+            func = cmd;
+        }
 
         if (!modules.containsKey(func)) {
             if (func.contains(prefix)) {
@@ -116,18 +126,9 @@ public class FunctionExecutor {
             return;
         }
         isRegistered = true;
-
-        Map<String, ConsoleFunction> messageHookMap = new HashMap<>();
-        functions.forEach((s,func) -> {
-            List<String> specialMessage = func.isHookSpecialMessage();
-            if (!specialMessage.isEmpty()) {
-                specialMessage.forEach(str -> messageHookMap.put(str,func));
-            }
-        });
-
         //Special message Hook
         SocketTransfer.getInstance().addListenerTask("SpecialMessageHook", message -> {
-            for (Map.Entry<String, ConsoleFunction> entry : messageHookMap.entrySet()) {
+            for (Map.Entry<String, ConsoleFunction> entry : FunctionExecutor.getMessageHookMap().entrySet()) {
                 if (message.contains(entry.getKey())) {
                     FunctionExecutor.executeMessageHook(entry.getValue() ,message);
                     break;
@@ -182,7 +183,6 @@ public class FunctionExecutor {
 
     public static void reloadModules() {
         modules.clear();
-
         initFunctions();
     }
 
@@ -215,6 +215,10 @@ public class FunctionExecutor {
         return oldCommand;
     }
 
+    public static Map<String, ConsoleFunction> getMessageHookMap() {
+        return messageHookMap;
+    }
+
     private static void loadFunctions() {
         if (!functions.isEmpty()) {
             return;
@@ -230,6 +234,12 @@ public class FunctionExecutor {
         functions.put("CustomMusic",new CustomMusicFunction());
         functions.put("DamageReport",new DamageReportFunction());
         //TODO 反射寻找其他模块来进行注册
+        functions.forEach((s,func) -> {
+            List<String> specialMessage = func.isHookSpecialMessage();
+            if (!specialMessage.isEmpty()) {
+                specialMessage.forEach(str -> messageHookMap.put(str,func));
+            }
+        });
     }
 
     public static Map<String, ConsoleFunction> getFunctions() {

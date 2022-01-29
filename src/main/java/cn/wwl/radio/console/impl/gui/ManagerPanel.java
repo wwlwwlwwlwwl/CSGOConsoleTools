@@ -1,6 +1,10 @@
 package cn.wwl.radio.console.impl.gui;
 
 import cn.wwl.radio.console.ConsoleManager;
+import cn.wwl.radio.executor.ConsoleFunction;
+import cn.wwl.radio.executor.FunctionExecutor;
+import cn.wwl.radio.file.ConfigLoader;
+import cn.wwl.radio.music.BackgroundMusic;
 import cn.wwl.radio.network.SocketTransfer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -14,6 +18,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ManagerPanel {
     private JButton normalInput;

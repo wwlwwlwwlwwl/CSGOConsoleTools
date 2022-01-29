@@ -4,6 +4,8 @@ import cn.wwl.radio.console.ConsoleManager;
 import cn.wwl.radio.console.GameConsole;
 import cn.wwl.radio.executor.functions.CustomMusicFunction;
 import cn.wwl.radio.file.ConfigLoader;
+import cn.wwl.radio.file.ConfigObject;
+import cn.wwl.radio.music.BackgroundMusic;
 import cn.wwl.radio.network.SocketTransfer;
 import cn.wwl.radio.utils.TimerUtils;
 import javazoom.jl.player.advanced.PausablePlayer;
@@ -11,6 +13,9 @@ import javazoom.jl.player.advanced.PausablePlayer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +35,19 @@ public class MinimizeTrayConsole implements GameConsole {
     );
     private static TrayIcon trayIcon;
     private final ManagerPanel panel = new ManagerPanel();
+
+    private static Font placeHolderFont;
+    private static Font trayFont;
+
+    static {
+        try {
+            placeHolderFont = new Font("Verdana", Font.PLAIN, 10);
+        } catch (Exception ignored) {}
+
+        try {
+            trayFont = new Font("微软雅黑", Font.PLAIN, 13);
+        } catch (Exception ignored) {}
+    }
 
     @Override
     public void init() {
@@ -93,7 +111,13 @@ public class MinimizeTrayConsole implements GameConsole {
             //双击Notification Modifiers=1024
         });
 
-        updatePopupMenu(trayIcon);
+        trayIcon.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                //Create PopupMenu when RightClick Tray
+                updatePopupMenu(trayIcon);
+            }
+        });
 
         createTrayMessage("CSGOConsoleTools is Started at Tray Mode!\nClick the Tray to Show the GUI!");
     }
@@ -107,32 +131,21 @@ public class MinimizeTrayConsole implements GameConsole {
 
     private static void updatePopupMenu(TrayIcon trayIcon) {
         PopupMenu menu = new PopupMenu("Menu");
-
-        if (SocketTransfer.getInstance().getSocket() == null || !SocketTransfer.getInstance().getSocket().isConnected()) {
-            MenuItem item = new MenuItem("Game not Running!");
-            item.setEnabled(false);
-            menu.add(item);
-        } else {
-            if (ConfigLoader.getConfigObject().isLobbyMusic()) {
-                String status = "";
-                switch (CustomMusicFunction.getLobbyMusicStatus()) {
-                    case PausablePlayer.PAUSED -> status = "Resume";
-                    case PausablePlayer.PLAYING -> status = "Pause";
-                }
-
-                if (!status.equals("")) {
-                    menu.add(createItem("Play Music", e -> {
-                        CustomMusicFunction.stopLobbyMusic(false);
-                        CustomMusicFunction.startLobbyMusic();
-                    }));
+        menu.add(createPlaceHolder("LobbyMusic"));
+        ConfigObject configObject = ConfigLoader.getConfigObject();
+        if (configObject != null) {
+            if (configObject.isLobbyMusic()) {
+                if (BackgroundMusic.isPlaying()) {
+                    menu.add(createItem("Pause Music", e -> BackgroundMusic.pauseBackgroundMusic()));
+                    menu.add(createItem("Stop Music", e -> BackgroundMusic.stopBackgroundMusic(false)));
                 } else {
-                    menu.add(createItem(status + " Music", e -> CustomMusicFunction.pauseLobbyMusic()));
-
-                    menu.add(createItem("Stop Music", e -> CustomMusicFunction.stopLobbyMusic()));
+                    menu.add(createItem("Play Music", e -> {
+                        BackgroundMusic.playBackgroundMusic(false);
+                    }));
                 }
 
-                menu.add(createItem("LobbyMusic Volume", e -> {
-                    int musicGain = (int)CustomMusicFunction.getLobbyMusicGain();
+                menu.add(createItem("Music Volume", e -> {
+                    int musicGain = (int) BackgroundMusic.getVolume();
                     Dimension dimension = new Dimension(400, 125);
                     JFrame musicFrame = new JFrame();
                     JPanel panel = new JPanel();
@@ -147,7 +160,7 @@ public class MinimizeTrayConsole implements GameConsole {
 
                     label.setVerticalAlignment(SwingConstants.CENTER);
                     label.setHorizontalAlignment(SwingConstants.CENTER);
-                    label.setText("" + musicGain);
+                    label.setText(String.valueOf(musicGain));
                     slider.setMinimum(-50);
                     slider.setMaximum(50);
                     slider.setValue(musicGain);
@@ -156,9 +169,8 @@ public class MinimizeTrayConsole implements GameConsole {
                     slider.setBackground(ManagerPanel.BACKGROUND_COLOR);
                     slider.addChangeListener(event -> {
                         int value = slider.getValue();
-                        label.setText("" + value);
-//                System.out.println("Volume: " + value);
-                        CustomMusicFunction.setLobbyMusicGain(value,false);
+                        label.setText(String.valueOf(value));
+                        BackgroundMusic.setVolume(value, false);
                     });
 
                     panel.setLayout(ManagerPanel.VERTICAL_LAYOUT);
@@ -169,15 +181,12 @@ public class MinimizeTrayConsole implements GameConsole {
                     musicFrame.setVisible(true);
                 }));
             }
+        } else {
+            //Waiting Config load done.
+            TimerUtils.callMeLater(200, MinimizeTrayConsole::updatePopupMenu);
         }
+
         menu.addSeparator();
-        menu.add(createItem(ManagerPanel.isShowing() ? "Hide GUI" : "Open GUI", e -> {
-            if (ManagerPanel.isShowing()) {
-                ManagerPanel.hideManagerPanel();
-            } else {
-                ManagerPanel.showManagerPanel();
-            }
-        }));
 
         menu.add(createItem("Exit", e -> SocketTransfer.getInstance().shutdown(true)));
 
@@ -194,8 +203,22 @@ public class MinimizeTrayConsole implements GameConsole {
 
     private static MenuItem createItem(String text, ActionListener action) {
         MenuItem item = new MenuItem(text);
-        item.addActionListener(action);
-        item.addActionListener(e -> updatePopupMenu(trayIcon));
+        if (trayFont != null)
+            item.setFont(trayFont);
+
+        item.addActionListener(e -> {
+            updatePopupMenu(trayIcon);
+            action.actionPerformed(e);
+        });
+        return item;
+    }
+
+    private static MenuItem createPlaceHolder(String text) {
+        MenuItem item = new MenuItem(text);
+        if (placeHolderFont != null)
+            item.setFont(placeHolderFont);
+
+        item.setEnabled(false);
         return item;
     }
 

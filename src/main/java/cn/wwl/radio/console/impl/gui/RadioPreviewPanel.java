@@ -213,6 +213,15 @@ public class RadioPreviewPanel {
 //                        document.insertString(document.getLength(), "", ATTRIBUTE_MAP.get(TextMarker.白色));
                         continue;
                     }
+                    if (humanCode == TextMarker.Playername) {
+                        String names = ConfigLoader.getConfigObject().getPreviousName();
+                        if (names != null) {
+                            document.insertString(document.getLength(), names, ATTRIBUTE_MAP.get(previusTextmarker));
+                        } else {
+                            document.insertString(document.getLength(), "[玩家ID]", ATTRIBUTE_MAP.get(previusTextmarker));
+                        }
+                        continue;
+                    }
                     previusTextmarker = humanCode;
                     continue;
                 }
@@ -233,6 +242,7 @@ public class RadioPreviewPanel {
         }
         addTextMarkerButton(TextMarker.Random, "随机", BACKGROUND_COLOR, textSize);
         addTextMarkerButton(TextMarker.Wrap, "换行", BACKGROUND_COLOR, textSize);
+        addTextMarkerButton(TextMarker.Playername, "名字", BACKGROUND_COLOR, textSize);
     }
 
     private void addTextMarkerButton(TextMarker color, String text, Color showColor, Dimension size) {

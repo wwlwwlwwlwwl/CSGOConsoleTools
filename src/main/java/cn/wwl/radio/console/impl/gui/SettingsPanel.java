@@ -184,7 +184,11 @@ public class SettingsPanel {
         }
 
         switch (selectedItem) {
-            case "Config", "Modules" -> ConfigLoader.writeConfigObject();
+            case "Config" -> ConfigLoader.writeConfigObject();
+            case "Modules" -> {
+                ConfigLoader.writeConfigObject();
+                updateModuleListData();
+            }
             case "Radio" -> RadioFileManager.getInstance().saveRadioConfig();
         }
         notificationText.setText("Config Saved.");
@@ -654,7 +658,6 @@ public class SettingsPanel {
                     result = new StringBuilder(substring);
                 }
 
-                System.out.println("Debug: " + result);
                 previewPanel.configureRadio(result.toString(), (str) -> {
                     frame.setEnabled(true);
                     if (str == null) {
@@ -761,6 +764,7 @@ public class SettingsPanel {
                         ex.printStackTrace();
                     }
                 });
+                checkBox.setToolTipText(ConfigObject.getTip(f.getName()));
                 CONFIG_PANEL.add(checkBox);
             } catch (Exception e) {
                 ConsoleManager.getConsole().printError("Try draw Checkbox for: " + f.getName() + " Throw Exception!");
@@ -796,6 +800,7 @@ public class SettingsPanel {
                         }
                     }
                 });
+                textField.setToolTipText(ConfigObject.getTip(f.getName()));
                 CONFIG_PANEL.add(label);
                 CONFIG_PANEL.add(textField);
             } catch (Exception e) {
@@ -828,6 +833,7 @@ public class SettingsPanel {
                     }
                 });
 
+                spinner.setToolTipText(ConfigObject.getTip(f.getName()));
                 CONFIG_PANEL.add(label);
                 CONFIG_PANEL.add(spinner);
             } catch (Exception e) {
@@ -839,10 +845,6 @@ public class SettingsPanel {
     }
 
     private String splitCaseStr(String s) {
-        if (s.contains("API")) {
-            return "API Token";
-        }
-
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
             Character ch = s.charAt(i);

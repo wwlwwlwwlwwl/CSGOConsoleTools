@@ -1,5 +1,7 @@
 package cn.wwl.radio.utils;
 
+import cn.wwl.radio.file.ConfigLoader;
+
 import java.awt.*;
 import java.util.List;
 import java.util.Random;
@@ -21,6 +23,7 @@ public enum TextMarker {
 
     Wrap("\u2028", "#next#"),
     Random(White.code, "#random#"),
+    Playername(White.code, "#name#"),
 
     Unknown("", "#unknown#");
 
@@ -85,6 +88,10 @@ public enum TextMarker {
         }
 
         for (TextMarker value : values()) {
+            if (value == Playername) {
+                str = str.replace(value.humanCode, ConfigLoader.getConfigObject().getPreviousName());
+                continue;
+            }
             str = str.replace(value.humanCode, value.code);
         }
 

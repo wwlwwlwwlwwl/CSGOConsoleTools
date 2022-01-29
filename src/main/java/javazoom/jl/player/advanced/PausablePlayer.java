@@ -5,6 +5,8 @@ import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.Player;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -23,11 +25,13 @@ public class PausablePlayer {
     // locking object used to communicate with player thread
     private final Object playerLock = new Object();
     private final Executor fadeExecutor = Executors.newSingleThreadExecutor();
+    private final List<Runnable> callbacks = new ArrayList<>();
 
     // status variable what player thread is doing/supposed to do
     private int playerStatus = NOTSTARTED;
 
     private float previusGain = 0F;
+    private boolean isPausing = false;
     private static final float GAIN_SPEED = 0.05F;
 
     public PausablePlayer(final InputStream inputStream) throws JavaLayerException {
@@ -41,7 +45,8 @@ public class PausablePlayer {
     /**
      * Starts playback (resumes if paused)
      */
-    public void play() throws JavaLayerException {
+    public void play() {
+        isPausing = false;
         synchronized (playerLock) {
             switch (playerStatus) {
                 case NOTSTARTED:
@@ -67,6 +72,32 @@ public class PausablePlayer {
         }
     }
 
+    public void addCallback(Runnable callback) {
+        if (callback != null && !callbacks.contains(callback))
+            callbacks.add(callback);
+    }
+
+    public void fadePlay(float volume) {
+        fadeExecutor.execute(() -> {
+            Thread.currentThread().setName("SoundFade Thread");
+            synchronized (fadeExecutor) {
+                play();
+                float gain = volume - 30F;
+                previusGain = volume;
+                while (gain < previusGain) {
+                    gain += GAIN_SPEED;
+                    player.setGain(gain);
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                player.setGain(previusGain);
+            }
+        });
+    }
+
     public void fadeResume() {
         fadeExecutor.execute(() -> {
             Thread.currentThread().setName("SoundFade Thread");
@@ -89,6 +120,7 @@ public class PausablePlayer {
 
     public void fadePause() {
         fadeExecutor.execute(() -> {
+            isPausing = true;
             Thread.currentThread().setName("SoundFade Thread");
             synchronized (fadeExecutor) {
                 previusGain = getGain();
@@ -145,6 +177,7 @@ public class PausablePlayer {
      * Resumes playback. Returns true if the new state is PLAYING.
      */
     public boolean resume() {
+        isPausing = false;
         synchronized (playerLock) {
             if (playerStatus == PAUSED) {
                 playerStatus = PLAYING;
@@ -185,6 +218,7 @@ public class PausablePlayer {
                 }
             }
         }
+        callbacks.forEach(Runnable::run);
         close();
     }
 
@@ -248,6 +282,9 @@ public class PausablePlayer {
     }
 
     public int getPlayerStatus() {
+        if (isPausing) {
+            return PAUSED;
+        }
         return playerStatus;
     }
 

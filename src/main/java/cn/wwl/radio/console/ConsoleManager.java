@@ -29,11 +29,6 @@ public class ConsoleManager {
 
         SocketTransfer.getInstance().addListenerTask("redirectGameConsole",console::redirectGameConsole);
         console.init();
-
-        try {
-            // Why you in here?
-            Thread.currentThread().wait();
-        } catch (Exception ignored) {}
     }
 
 

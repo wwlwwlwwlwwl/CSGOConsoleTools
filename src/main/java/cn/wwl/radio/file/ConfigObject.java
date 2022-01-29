@@ -5,15 +5,40 @@ import cn.wwl.radio.utils.TextMarker;
 import java.util.*;
 
 public class ConfigObject {
-    private String prefix = "jw";
+
+    private boolean musicNetworkSearch = true;
     private boolean autoReloadConfig = true;
+    private boolean lobbyMusic = true;
+    private boolean usingLauncher = false;
+
     private int gamePort = 10090;
     private int remoteConsolePort = 29999;
-    private boolean musicNetworkSearch = true;
+
+    private String prefix = "jw";
     private String musicSource = "Netease";
-    private boolean lobbyMusic = true;
     private String gamePath = "NULL";
     private String previousName = "NULL";
+
+    private static final Map<String, String> _TIP_MAP = Map.of(
+            "musicNetworkSearch", "开启为使用在线API搜索音乐,关闭则为使用本地音乐",
+            "autoReloadConfig", "在检测到配置文件修改时自动重读",
+            "lobbyMusic", "是否使用背景音乐,使用时请关闭游戏内主界面音乐盒音量",
+            "usingLauncher", "使用启动器模式,在游戏退出时仍会播放LobbyMusic",
+            "prefix", "所有命令的前缀,在游戏控制台直接输入时的前缀",
+            "musicSource","在线搜索音乐的来源,可以为网易云[Netease]或QQ音乐[QQ]",
+            "gamePath", "游戏所在的位置,音乐缓存会存储在那里,如果无法自动定位可尝试手动设置",
+            "previousName", "上次启动游戏时的玩家ID, 用于在某些需要玩家ID的地方显示",
+            "gamePort", "游戏-netconport的端口,一般无需修改",
+            "remoteConsolePort", "游戏内netconport的重定向,可以通过telnet等连接"
+    );
+
+    public static String getTip(String title) {
+        if (_TIP_MAP.containsKey(title)) {
+            return _TIP_MAP.get(title);
+        }
+        return "[Unknown Setting]";
+    }
+
     private Map<String, String> autoReplaceCommand = new HashMap<>();
 
     private List<ModuleObject> moduleList = new ArrayList<>(List.of(ModuleObject.getTemplate()));
@@ -53,6 +78,10 @@ public class ConfigObject {
 
     public boolean isLobbyMusic() {
         return lobbyMusic;
+    }
+
+    public boolean isUsingLauncher() {
+        return usingLauncher;
     }
 
     public ConfigObject setPrefix(String prefix) {
