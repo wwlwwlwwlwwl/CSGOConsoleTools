@@ -296,7 +296,19 @@ public class SocketTransfer {
         }
     }
 
+    public void echoToConsole(String str, boolean prefix) {
+        if (str == null || str.length() == 0) {
+            pushToConsole("echo \r\n");
+            return;
+        }
+        if (prefix) {
+            pushToConsole("echo \"" + ECHO_HEAD + " > " + str + "\"");
+        } else {
+            pushToConsole("echo \"" + str + "\"");
+        }
+    }
+
     public void echoToConsole(String str) {
-        pushToConsole("echo \"" + ECHO_HEAD + " > " + str + "\"");
+        echoToConsole(str, true);
     }
 }

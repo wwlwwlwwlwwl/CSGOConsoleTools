@@ -32,7 +32,6 @@ public class CustomMusicFunction implements ConsoleFunction {
     private static String volumeKey = "K";
     private static boolean isPlaying = false;
     private static boolean isBootFailed = false;
-    private static boolean isInited = false;
 
     //在控制台出现flare的时候肯定是结算界面 但是同时也会出现globe 而这时候玩家可能还没有退出游戏 所以写一个定时器在获取到flare之后暂时禁用globe的获取
     private static boolean disableGlobe = false;
@@ -82,11 +81,36 @@ public class CustomMusicFunction implements ConsoleFunction {
     }
 
     @Override
-    public void onTick() {
-        if (!isInited) {
-            init();
+    public void onInit() {
+        ConsoleManager.getConsole().printToConsole("Start init CustomMusic function...");
+
+        if (SteamUtils.getCsgoPath() == null) {
+            isBootFailed = true;
+            return;
         }
-    }
+
+        if (!SoxSoundUtils.initSox(SteamUtils.getCsgoPath())) {
+            isBootFailed = true;
+            return;
+        }
+
+        if (enableLobbyMusic) {
+            registerCommandHook();
+        }
+
+        if (!isLocalVersion) {
+            return;
+        }
+
+        File[] musics = SoxSoundUtils.getMusicDir().listFiles((file) -> !file.isDirectory());
+        if (musics == null || musics.length == 0) {
+            ConsoleManager.getConsole().printToConsole("CanNot find any Music!");
+            return;
+        }
+
+        for (File music : musics) {
+            SoxSoundUtils.cacheMusic(music);
+        }    }
 
     @Override
     public void onExecuteFunction(List<String> parameter) {
@@ -206,9 +230,7 @@ public class CustomMusicFunction implements ConsoleFunction {
                     ConsoleManager.getConsole().printToConsole("Music volume Set to " + volume);
                     SocketTransfer.getInstance().echoToConsole("Music volume Set to " + volume);
                 } catch (Exception e) {
-//                    ConsoleManager.getConsole().printError("Try parse Volume value: [" + str + "] Throw exception!");
-//                    e.printStackTrace();
-                    SocketTransfer.getInstance().echoToConsole("Wrong Music command. Do you mean music[(+/-)Volume]?");
+                    SocketTransfer.getInstance().echoToConsole("Wrong Music cmd Usage. Do you mean music[(+/-)Volume]?");
                 }
             }
 
@@ -402,7 +424,7 @@ public class CustomMusicFunction implements ConsoleFunction {
     }
 
     public static void playMusic(File cachedMusic) {
-        if (isPlaying || !isInited) {
+        if (isPlaying) {
             return;
         }
 
@@ -446,38 +468,5 @@ public class CustomMusicFunction implements ConsoleFunction {
         );
         isPlaying = false;
         SocketTransfer.getInstance().echoToConsole("Music play now Stop.");
-    }
-
-    private void init() {
-        isInited = true;
-        ConsoleManager.getConsole().printToConsole("Start init CustomMusic function...");
-
-        if (SteamUtils.getCsgoPath() == null) {
-            isBootFailed = true;
-            return;
-        }
-
-        if (!SoxSoundUtils.initSox(SteamUtils.getCsgoPath())) {
-            isBootFailed = true;
-            return;
-        }
-
-        if (!isLocalVersion) {
-            return;
-        }
-
-        File[] musics = SoxSoundUtils.getMusicDir().listFiles((file) -> !file.isDirectory());
-        if (musics == null || musics.length == 0) {
-            ConsoleManager.getConsole().printToConsole("CanNot find any Music!");
-            return;
-        }
-
-        for (File music : musics) {
-            SoxSoundUtils.cacheMusic(music);
-        }
-
-        if (enableLobbyMusic) {
-            registerCommandHook();
-        }
     }
 }

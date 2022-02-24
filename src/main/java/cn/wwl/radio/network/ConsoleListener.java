@@ -35,7 +35,7 @@ public class ConsoleListener implements Runnable {
     public void run() {
         Socket socket = SocketTransfer.getInstance().getSocket();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8), 81920);
             while (!Thread.currentThread().isInterrupted()) {
                 String read;
                 try {

@@ -16,7 +16,7 @@ public class CustomRadioFunction implements ConsoleFunction {
 
     @Override
     public void onExecuteFunction(List<String> parameter) {
-        String radio = "hi";
+        String radio = "CW.debug";
         String message;
         if (parameter.size() == 1) {
             message = parameter.get(0);
@@ -41,7 +41,7 @@ public class CustomRadioFunction implements ConsoleFunction {
             message = "#next#" + message;
         }
 //        System.out.println("Debug: " + message);
-        String cmd = TextMarker.replaceHumanCode("playerradio " + radio + " \"" + message + "\"");
+        String cmd = TextMarker.replaceHumanCode("playerchatwheel " + radio + " \"" + message + "\"");
         SocketTransfer.getInstance().pushToConsole(cmd); //TODO 自动切断句子避免过长
     }
 

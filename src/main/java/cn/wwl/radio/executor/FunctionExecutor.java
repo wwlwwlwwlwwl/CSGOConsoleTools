@@ -114,6 +114,7 @@ public class FunctionExecutor {
             startTickThread();
         }
 
+        functions.forEach((name, func) -> func.onInit());
         RadioFileManager.getInstance();
     }
 
@@ -233,6 +234,7 @@ public class FunctionExecutor {
         functions.put("Debug",new DebugFunction());
         functions.put("CustomMusic",new CustomMusicFunction());
         functions.put("DamageReport",new DamageReportFunction());
+        functions.put("AdnmbClient", new AdnmbClientFunction());
         //TODO 反射寻找其他模块来进行注册
         functions.forEach((s,func) -> {
             List<String> specialMessage = func.isHookSpecialMessage();

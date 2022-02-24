@@ -61,4 +61,9 @@ public interface ConsoleFunction {
      * 用于重新注册一些钩子
      */
     default void onApplicationReboot() {}
+
+    /**
+     * 当系统被初始化时调用
+     */
+    default void onInit() {}
 }
